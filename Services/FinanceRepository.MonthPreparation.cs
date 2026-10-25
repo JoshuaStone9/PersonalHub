@@ -52,7 +52,7 @@ public sealed partial class FinanceRepository
         return sections;
     }
 
-    public async Task<int> PrepareSelectedMonthEntriesAsync(int year, int month, IReadOnlyCollection<string> selectedKeys)
+    public async Task<int> PrepareSelectedMonthEntriesAsync(int year, int month, IReadOnlyCollection<string> selectedKeys, IReadOnlyDictionary<string, MonthPreparationProposal>? proposals = null)
     {
         if (selectedKeys.Count == 0) return 0;
         var next = new DateTime(year, month, 1).AddMonths(1);
@@ -69,6 +69,12 @@ public sealed partial class FinanceRepository
         var incomeChanged = false;
         foreach (var item in items)
         {
+            var proposal = proposals is not null && proposals.TryGetValue(item.Key, out var submitted) ? submitted : null;
+            var amount = proposal is null || proposal.Amount < 0m ? item.Amount : proposal.Amount;
+            var proposedDate = proposal?.Date ?? item.DateIn(next);
+            var date = proposedDate.Year == next.Year && proposedDate.Month == next.Month
+                ? proposedDate
+                : item.DateIn(next);
             var (table, dateColumn, columns, values) = item.Source switch
             {
                 "income" => ("monthly_income_entries", "[date]", "category,notes,is_recurring", "@category,@notes,@recurring"),
@@ -95,8 +101,8 @@ BEGIN
 END
 ELSE SELECT 0;", con, tx);
             cmd.Parameters.AddWithValue("@name", item.Name.Trim());
-            cmd.Parameters.AddWithValue("@amount", item.Amount);
-            cmd.Parameters.AddWithValue("@date", item.DateIn(next));
+            cmd.Parameters.AddWithValue("@amount", amount);
+            cmd.Parameters.AddWithValue("@date", date);
             cmd.Parameters.AddWithValue("@start", next);
             cmd.Parameters.AddWithValue("@end", next.AddMonths(1));
             cmd.Parameters.AddWithValue("@category", DbValue(item.Category));
@@ -109,7 +115,7 @@ ELSE SELECT 0;", con, tx);
             if (Convert.ToInt32(await cmd.ExecuteScalarAsync()) == 0) continue;
             added++;
             incomeChanged |= item.Source == "income";
-            if (item.ReservePotId is int potId && item.Amount > 0)
+            if (item.ReservePotId is int potId && amount > 0)
             {
                 await using var allocation = new SqlCommand(@"
 UPDATE dbo.reserve_pots SET allocated_amount=CASE WHEN allocated_amount+@amount<0 THEN 0 ELSE allocated_amount+@amount END,updated_at=SYSUTCDATETIME() WHERE reserve_pot_id=@pot;
@@ -117,7 +123,7 @@ UPDATE dbo.household_reserve SET balance=CASE WHEN balance+@amount<0 THEN 0 ELSE
 INSERT INTO dbo.finance_events(area,event_type,entity_type,entity_id,title,[description],amount,source)
 VALUES('Household Reserve','ContributionAdded','ReservePot',@pot,@title,'Contribution recorded through Prepare next month.',@amount,'Dashboard');", con, tx);
                 allocation.Parameters.AddWithValue("@pot", potId);
-                allocation.Parameters.AddWithValue("@amount", item.Amount);
+                allocation.Parameters.AddWithValue("@amount", amount);
                 allocation.Parameters.AddWithValue("@title", $"{item.Name} funded");
                 await allocation.ExecuteNonQueryAsync();
                 updatedPots[potId] = item.Name;

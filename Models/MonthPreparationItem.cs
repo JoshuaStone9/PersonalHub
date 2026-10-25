@@ -24,3 +24,5 @@ public sealed record MonthPreparationItem(
             .ToList();
     }
 }
+
+public sealed record MonthPreparationProposal(decimal Amount, DateTime Date);

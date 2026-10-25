@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Implemented on 25 October 2026. The existing month-preparation workflow is now exposed as the canonical Month Setup route; its transactional, duplicate-safe selection flow remains the single setup action.
 
 ## Goal
 
@@ -42,3 +42,8 @@ Extra expenses remain one-off by default and are not proposed unless a later exp
 - Automatically carrying a previous month's surplus or shortfall.
 - Changing pot funding recommendations.
 - Scheduling unattended month creation.
+
+## Verification
+
+- `/Month/Setup` exposes the existing preview and confirmation workflow.
+- The preparation repository path re-reads eligibility, prevents duplicates under a serializable transaction, preserves source metadata and leaves starting adjustments unchanged.

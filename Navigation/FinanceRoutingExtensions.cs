@@ -25,6 +25,7 @@ public static class FinanceRoutingExtensions
         endpoints.MapControllerRoute(FinanceRouteNames.Home, "Home", new { controller = "Dashboard", action = "Index" });
 
         endpoints.MapControllerRoute(FinanceRouteNames.MonthOverview, "Month/Overview", new { controller = "Dashboard", action = "Index", monthOverview = true });
+        endpoints.MapControllerRoute(FinanceRouteNames.MonthSetup, "Month/Setup", new { controller = "Dashboard", action = "PrepareNextMonth" });
         endpoints.MapControllerRoute(FinanceRouteNames.MonthEssentialBills, "Month/Essential-bills", new { controller = "MonthlyMoney", action = "EssentialBills" });
         endpoints.MapControllerRoute(FinanceRouteNames.MonthEverydaySpending, "Month/Everyday-spending", new { controller = "MonthlyMoney", action = "EverydaySpending" });
         endpoints.MapControllerRoute(FinanceRouteNames.MonthExtraExpenses, "Month/Extra-expenses", new { controller = "MonthlyMoney", action = "ExtraExpenses" });

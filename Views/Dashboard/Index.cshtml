@@ -24,7 +24,7 @@
         </nav>
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <a class="button primary" asp-action="PrepareNextMonth" asp-route-year="@Model.Year" asp-route-month="@Model.Month">
+            <a class="button primary" asp-route="finance-month-setup" asp-route-year="@Model.Year" asp-route-month="@Model.Month">
                 <i data-lucide="calendar-plus" aria-hidden="true"></i>
                 Prepare next month
             </a>

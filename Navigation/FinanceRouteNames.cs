@@ -6,6 +6,7 @@ public static class FinanceRouteNames
 
     public const string Month = "finance-month";
     public const string MonthOverview = "finance-month-overview";
+    public const string MonthSetup = "finance-month-setup";
     public const string MonthEssentialBills = "finance-month-essential-bills";
     public const string MonthEverydaySpending = "finance-month-everyday-spending";
     public const string MonthExtraExpenses = "finance-month-extra-expenses";

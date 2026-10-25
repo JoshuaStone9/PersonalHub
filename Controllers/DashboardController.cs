@@ -320,23 +320,29 @@ public sealed class DashboardController(
         if (year is < 1 or > 9998 || month is < 1 or > 12) return BadRequest("Invalid month or year.");
 
         var sections = await repo.GetMonthPreparationSectionsAsync(year, month);
+        var startingAdjustment = await repo.GetCarryForwardInfoAsync(year, month);
 
         return View(new PrepareNextMonthViewModel
         {
             Year = year,
             Month = month,
-            Sections = sections
+            Sections = sections,
+            StartingAdjustment = startingAdjustment.EffectiveAmount,
+            HasStartingAdjustment = startingAdjustment.Exists
         });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> ConfirmPrepareNextMonth(int year, int month, List<string>? selectedEntries)
+    public async Task<IActionResult> ConfirmPrepareNextMonth(int year, int month, List<string>? selectedEntries, string? proposalsJson)
     {
         if (!CanEdit()) return LoginRedirect();
         if (year is < 1 or > 9998 || month is < 1 or > 12) return BadRequest("Invalid month or year.");
 
         var next = new DateTime(year, month, 1).AddMonths(1);
-        var added = await repo.PrepareSelectedMonthEntriesAsync(year, month, selectedEntries ?? []);
+        var proposals = string.IsNullOrWhiteSpace(proposalsJson)
+            ? new Dictionary<string, MonthPreparationProposal>()
+            : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, MonthPreparationProposal>>(proposalsJson) ?? [];
+        var added = await repo.PrepareSelectedMonthEntriesAsync(year, month, selectedEntries ?? [], proposals);
 
         TempData["Success"] = added == 0
             ? $"No entries were added to {next:MMMM yyyy}. Existing entries were left unchanged."

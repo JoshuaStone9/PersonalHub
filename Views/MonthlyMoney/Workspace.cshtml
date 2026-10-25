@@ -436,8 +436,7 @@
             <p class="muted">Add all missing recurring entries using their latest amounts. Existing entries are left unchanged.</p>
         </div>
         <a class="button primary"
-           asp-controller="Dashboard"
-           asp-action="PrepareNextMonth"
+           asp-route="finance-month-setup"
            asp-route-year="@Model.Year"
            asp-route-month="@Model.Month">
             Prepare next month

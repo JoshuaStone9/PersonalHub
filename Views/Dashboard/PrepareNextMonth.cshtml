@@ -9,8 +9,7 @@
     <div>
         <p class="eyebrow">Prepare next month</p>
         <h1>Prepare @Model.NextMonth.ToString("MMMM yyyy")</h1>
-        <p class="muted">Choose what to repeat from @Model.CurrentMonth.ToString("MMMM"). Recurring entries are selected automatically. One-off entries and extra expenses are optional.</p>
-        <p class="muted">Existing entries are never replaced. For repeated names in a section, the most recent entry is offered. Money Pot selections record contributions and update pot balances.</p>
+        <details class="fm-setup-hero-info"><summary><i data-lucide="info" aria-hidden="true"></i><span class="fm-visually-hidden">About month setup</span></summary><div class="fm-setup-hero-copy"><p>Choose what to repeat from @Model.CurrentMonth.ToString("MMMM"). Recurring entries are selected automatically. One-off entries and extra expenses are optional.</p><p>Existing entries are never replaced. For repeated names in a section, the most recent entry is offered. Money Pot selections record contributions and update pot balances.</p><p>The starting adjustment is a manual amount for the selected month. It is not new income and is not carried forward automatically.</p></div></details>
     </div>
     <a class="button" asp-action="Index" asp-route-year="@Model.Year" asp-route-month="@Model.Month">Back to @Model.CurrentMonth.ToString("MMMM")</a>
 </section>
@@ -19,10 +18,12 @@
     @Html.AntiForgeryToken()
     <input type="hidden" name="year" value="@Model.Year" />
     <input type="hidden" name="month" value="@Model.Month" />
+    <input type="hidden" name="proposalsJson" id="prepare-proposals" />
     <section class="fm-prepare-next-summary" aria-live="polite" aria-atomic="true">
-        <article class="fm-metric-card"><span>Selected entries</span><strong id="prepare-count">@Model.RecurringEntryCount</strong><small>Only selected entries will be added</small></article>
-        <article class="fm-metric-card"><span>Selected income</span><strong id="prepare-income">@Model.IncomeTotal.ToString("C", gb)</strong><small>Income to record next month</small></article>
-        <article class="fm-metric-card"><span>Selected spending &amp; allocations</span><strong id="prepare-allocations">@Model.AllocationTotal.ToString("C", gb)</strong><small>No balance or shortfall is carried forward</small></article>
+        <article class="fm-metric-card"><span>Selected entries</span><strong id="prepare-count">@Model.RecurringEntryCount</strong><details class="fm-summary-info"><summary aria-label="About selected entries"><i data-lucide="info" aria-hidden="true"></i></summary><small>Only selected entries will be added.</small></details></article>
+        <article class="fm-metric-card"><span>Selected income</span><strong id="prepare-income">@Model.IncomeTotal.ToString("C", gb)</strong><details class="fm-summary-info"><summary aria-label="About selected income"><i data-lucide="info" aria-hidden="true"></i></summary><small>Income to record next month.</small></details></article>
+        <article class="fm-metric-card"><span>Selected spending &amp; allocations</span><strong id="prepare-allocations">@Model.AllocationTotal.ToString("C", gb)</strong><details class="fm-summary-info"><summary aria-label="About selected spending and allocations"><i data-lucide="info" aria-hidden="true"></i></summary><small>No balance or shortfall is carried forward.</small></details></article>
+        <article class="fm-metric-card"><span>Starting adjustment</span><strong>@Model.StartingAdjustment.ToString("C", gb)</strong><small>@Model.CurrentMonth.ToString("MMMM yyyy")</small></article>
     </section>
     <section class="card fm-prepare-next-card">
         @if (Model.EntryCount == 0)
@@ -56,7 +57,16 @@
                                     <label class="fm-prepare-next-item">
                                         <input type="checkbox" name="selectedEntries" value="@item.Key" checked="@item.IsRecurring" data-source="@item.Source" data-amount="@item.Amount.ToString(CultureInfo.InvariantCulture)" />
                                         <span class="fm-prepare-item-copy"><strong>@item.Name</strong><small>@(item.IsRecurring ? "Repeats monthly" : "One-off · optional") · @item.DateIn(Model.NextMonth).ToString("d MMM", gb)</small></span>
-                                        <strong>@item.Amount.ToString("C", gb)</strong>
+                                        <div class="fm-workspace-row-amount fm-prepare-inline-editor">
+                                            <button class="fm-inline-amount-trigger" type="button" aria-expanded="false" title="Edit amount for @item.Name"><span>@item.Amount.ToString("C", gb)</span><i data-lucide="pencil"></i></button>
+                                            <form class="fm-inline-amount-form fm-prepare-amount-form" hidden>
+                                                <span aria-hidden="true">£</span>
+                                                <input class="fm-inline-amount-input fm-prepare-amount" type="number" min="0" step="0.01" value="@item.Amount.ToString("0.00", CultureInfo.InvariantCulture)" aria-label="Amount for @item.Name" required />
+                                                <button class="button primary fm-prepare-editor-save" type="button">Save</button>
+                                                <button class="button fm-inline-amount-cancel fm-prepare-editor-cancel" type="button">Cancel</button>
+                                            </form>
+                                        </div>
+                                        <div class="fm-prepare-inline-editor fm-prepare-date-inline-editor"><button class="fm-inline-amount-trigger fm-prepare-date-trigger" type="button" title="Change date for @item.Name"><span>@item.DateIn(Model.NextMonth).ToString("d MMM", gb)</span><i data-lucide="calendar-days"></i></button><form class="fm-inline-amount-form fm-prepare-date-form" hidden><input class="fm-prepare-date" type="date" value="@item.DateIn(Model.NextMonth).ToString("yyyy-MM-dd")" aria-label="Date for @item.Name" /><button class="button primary fm-prepare-editor-save" type="button">Save</button><button class="button fm-inline-amount-cancel fm-prepare-editor-cancel" type="button">Cancel</button></form></div>
                                     </label>
                                 }
                             </div>
@@ -73,4 +83,17 @@
 </form>
 @section Scripts {
     <script src="~/js/prepare-next-month.js" asp-append-version="true"></script>
+    <script>
+        document.querySelector('#prepare-next-month')?.addEventListener('submit', () => {
+            const proposals = {};
+            document.querySelectorAll('.fm-prepare-next-item').forEach(row => {
+                const checkbox = row.querySelector('input[name="selectedEntries"]');
+                if (!checkbox?.checked) return;
+                const amount = row.querySelector('.fm-prepare-amount')?.value;
+                const date = row.querySelector('.fm-prepare-date')?.value;
+                proposals[checkbox.value] = { Amount: Number(amount || 0), Date: date };
+            });
+            document.querySelector('#prepare-proposals').value = JSON.stringify(proposals);
+        });
+    </script>
 }

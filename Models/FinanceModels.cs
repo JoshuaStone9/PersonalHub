@@ -1016,6 +1016,8 @@ public sealed class PrepareNextMonthViewModel
     public DateTime CurrentMonth => new(Year, Month, 1);
     public DateTime NextMonth => CurrentMonth.AddMonths(1);
     public IReadOnlyList<PrepareNextMonthSection> Sections { get; init; } = [];
+      public decimal StartingAdjustment { get; init; }
+      public bool HasStartingAdjustment { get; init; }
     public int EntryCount => Sections.Sum(x => x.Items.Count);
     public int RecurringEntryCount => Sections.Sum(x => x.Items.Count(i => i.IsRecurring));
     public decimal RecurringTotal => Sections.Sum(x => x.Total);
