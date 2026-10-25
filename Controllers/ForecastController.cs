@@ -18,10 +18,14 @@ public sealed class ForecastController(
         var endDate = customEndDate?.Date ?? DateTime.Today.AddMonths(safeMonths);
         if (endDate < DateTime.Today) endDate = DateTime.Today;
 
-        var accountSummary = await reserveAccountSelectionService.BuildSummaryAsync();
-        var pots = await repo.GetReservePotsAsync();
+        var accountSummaryTask = reserveAccountSelectionService.BuildSummaryAsync();
+        var potsTask = repo.GetReservePotsAsync();
+        var investmentStagesTask = repo.GetReservePotInvestmentStagesAsync();
+        await Task.WhenAll(accountSummaryTask, potsTask, investmentStagesTask);
+        var accountSummary = await accountSummaryTask;
+        var pots = await potsTask;
         var fundingSummaries = await repo.GetReservePotFundingSummariesAsync(pots);
-        var investmentStages = await repo.GetReservePotInvestmentStagesAsync();
+        var investmentStages = await investmentStagesTask;
         var forecast = financialForecastService.Build(new FinancialForecastRequest
         {
             StartDate = DateTime.Today,

@@ -11,7 +11,8 @@ public sealed class FinanceHubNavigationViewComponent(IFinanceNavigationService 
         var action = RouteData.Values["action"]?.ToString();
         var isManageMonth = string.Equals(controller, "Dashboard", StringComparison.OrdinalIgnoreCase)
             && string.Equals(action, "Index", StringComparison.OrdinalIgnoreCase)
-            && string.Equals(Request.Query["manage"], "true", StringComparison.OrdinalIgnoreCase);
+            && (string.Equals(Request.Query["manage"], "true", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(RouteData.Values["monthOverview"]?.ToString(), "true", StringComparison.OrdinalIgnoreCase));
 
         var model = navigation.BuildHubNavigation(
             controller,

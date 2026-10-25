@@ -74,6 +74,22 @@ public sealed class FinanceNavigationServiceTests
         Assert.Equal("Statements", active.Label);
     }
 
+    [Fact]
+    public void MonthOverview_IsTheActiveTabForManagedDashboardRoute()
+    {
+        var navigation = _navigation.BuildHubNavigation(
+            "Dashboard",
+            "Index",
+            "2026",
+            "10",
+            isManageMonth: true);
+
+        var active = Assert.Single(navigation!.Tabs, tab => tab.IsActive);
+        Assert.Equal("Overview", active.Label);
+        Assert.Equal("2026", active.RouteValues!["year"]);
+        Assert.Equal("10", active.RouteValues["month"]);
+    }
+
     [Theory]
     [InlineData("/Dashboard/Index", "/Home")]
     [InlineData("/MonthlyMoney/Investments", "/Month/Investment-contributions")]

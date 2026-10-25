@@ -14,21 +14,29 @@ public sealed class SavingPotsController(
 {
     public async Task<IActionResult> Index(bool reselect = false, DateTime? forecastDate = null, bool includeFutureContributions = false)
     {
-        var reserve = await repo.GetHouseholdReserveAsync();
-        var accountSummary = await reserveAccountSelectionService.BuildSummaryAsync();
+        var reserveTask = repo.GetHouseholdReserveAsync();
+        var accountSummaryTask = reserveAccountSelectionService.BuildSummaryAsync();
+        var potsTask = repo.GetReservePotsAsync();
+        await Task.WhenAll(reserveTask, accountSummaryTask, potsTask);
+        var reserve = await reserveTask;
+        var accountSummary = await accountSummaryTask;
         var interestForecast = reserveInterestForecastService.Build(
             accountSummary.SelectedAccounts,
             forecastDate ?? DateTime.Today.AddYears(1),
             includeFutureContributions);
-        var pots = await repo.GetReservePotsAsync();
-        var summaries = await repo.GetReservePotFundingSummariesAsync(pots);
-        var investmentStages = await repo.GetReservePotInvestmentStagesAsync();
+        var pots = await potsTask;
+        var summariesTask = repo.GetReservePotFundingSummariesAsync(pots);
+        var investmentStagesTask = repo.GetReservePotInvestmentStagesAsync();
+        var dueRemindersTask = repo.GetFinanceRemindersAsync("Open", dueOnly: true);
+        await Task.WhenAll(summariesTask, investmentStagesTask, dueRemindersTask);
+        var summaries = await summariesTask;
+        var investmentStages = await investmentStagesTask;
         await repo.SyncFundingRemindersAsync(pots, summaries);
         var totalAllocated = pots.Where(x => x.IsActive).Sum(x => Math.Max(0m, x.AllocatedAmount));
         var remainingToAllocate = Math.Max(0m, accountSummary.SurplusAboveBaseline - totalAllocated);
         var recommendations = recommendationService.BuildRecoveryRecommendations(
             remainingToAllocate, pots, summaries);
-        var dueReminders = await repo.GetFinanceRemindersAsync("Open", dueOnly: true);
+        var dueReminders = await dueRemindersTask;
         return View(new HouseholdReserveViewModel
         {
             Reserve = reserve,

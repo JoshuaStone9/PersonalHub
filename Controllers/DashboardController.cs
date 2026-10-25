@@ -14,7 +14,7 @@ public sealed class DashboardController(
     IWhatIfForecastService whatIfForecastService,
     IForecastScenarioService forecastScenarioService) : Controller
 {
-    public async Task<IActionResult> Index(int? year, int? month, bool manage = false, string? source = null)
+    public async Task<IActionResult> Index(int? year, int? month, bool manage = false, string? source = null, bool monthOverview = false)
     {
         var now = DateTime.Today;
         var y = year ?? now.Year;
@@ -179,7 +179,7 @@ public sealed class DashboardController(
             ViewBag.ExistingSavings = await repo.GetExistingPaymentOptionsAsync("savings");
         }
 
-        return View(manage ? "ManageMonth" : "Index", vm);
+        return View(manage && !monthOverview ? "ManageMonth" : "Index", vm);
     }
 
     [HttpPost, ValidateAntiForgeryToken]

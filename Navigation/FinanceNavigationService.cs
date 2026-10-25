@@ -70,6 +70,7 @@ public sealed class FinanceNavigationService : IFinanceNavigationService
         {
             "month" => new("Month",
             [
+                Tab("Overview", FinanceRouteNames.MonthOverview, monthValues, controller, action, "Dashboard", isManageMonth, "Index"),
                 Tab("Income", FinanceRouteNames.Month, monthValues, controller, action, "MonthlyMoney", "Income"),
                 Tab("Essential bills", FinanceRouteNames.MonthEssentialBills, monthValues, controller, action, "MonthlyMoney", "EssentialBills"),
                 Tab("Everyday spending", FinanceRouteNames.MonthEverydaySpending, monthValues, controller, action, "MonthlyMoney", "EverydaySpending"),
@@ -113,13 +114,24 @@ public sealed class FinanceNavigationService : IFinanceNavigationService
         string? action,
         string? activeController,
         params string[] activeActions)
+        => Tab(label, routeName, routeValues, controller, action, activeController, false, activeActions);
+
+    private static FinanceHubTab Tab(
+        string label,
+        string routeName,
+        Dictionary<string, string>? routeValues,
+        string? controller,
+        string? action,
+        string? activeController,
+        bool activeOverride,
+        params string[] activeActions)
     {
         var controllerMatches = activeController is not null
             && string.Equals(controller, activeController, StringComparison.OrdinalIgnoreCase);
         var actionMatches = activeActions.Length == 0
             || activeActions.Any(candidate => string.Equals(action, candidate, StringComparison.OrdinalIgnoreCase));
 
-        return new(label, routeName, routeValues, controllerMatches && actionMatches);
+        return new(label, routeName, routeValues, activeOverride || controllerMatches && actionMatches);
     }
 
     private static bool IsController(string? controller, params string[] candidates)

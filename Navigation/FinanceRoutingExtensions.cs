@@ -24,6 +24,7 @@ public static class FinanceRoutingExtensions
     {
         endpoints.MapControllerRoute(FinanceRouteNames.Home, "Home", new { controller = "Dashboard", action = "Index" });
 
+        endpoints.MapControllerRoute(FinanceRouteNames.MonthOverview, "Month/Overview", new { controller = "Dashboard", action = "Index", monthOverview = true });
         endpoints.MapControllerRoute(FinanceRouteNames.MonthEssentialBills, "Month/Essential-bills", new { controller = "MonthlyMoney", action = "EssentialBills" });
         endpoints.MapControllerRoute(FinanceRouteNames.MonthEverydaySpending, "Month/Everyday-spending", new { controller = "MonthlyMoney", action = "EverydaySpending" });
         endpoints.MapControllerRoute(FinanceRouteNames.MonthExtraExpenses, "Month/Extra-expenses", new { controller = "MonthlyMoney", action = "ExtraExpenses" });
@@ -33,19 +34,23 @@ public static class FinanceRoutingExtensions
 
         endpoints.MapControllerRoute(FinanceRouteNames.AccountStatements, "Accounts/Statements/{action=Index}/{id?}", new { controller = "StatementReconciliation" });
         endpoints.MapControllerRoute(FinanceRouteNames.AccountHoldings, "Accounts/Holdings/{action=Index}/{id?}", new { controller = "Assets" });
-        endpoints.MapControllerRoute(FinanceRouteNames.Accounts, "Accounts/{action=Index}/{id?}", new { controller = "Reconciliation" });
+        endpoints.MapControllerRoute(FinanceRouteNames.Accounts, "Accounts", new { controller = "Reconciliation", action = "Index" });
+        endpoints.MapControllerRoute(FinanceRouteNames.AccountsAction, "Accounts/{action=Index}/{id?}", new { controller = "Reconciliation" });
 
         endpoints.MapControllerRoute(FinanceRouteNames.PotActivity, "Pots/Activity", new { controller = "MoneyPotActivity", action = "Index" });
-        endpoints.MapControllerRoute(FinanceRouteNames.Pots, "Pots/{action=Index}/{id?}", new { controller = "SavingPots" });
+        endpoints.MapControllerRoute(FinanceRouteNames.Pots, "Pots", new { controller = "SavingPots", action = "Index" });
+        endpoints.MapControllerRoute(FinanceRouteNames.PotsAction, "Pots/{action=Index}/{id?}", new { controller = "SavingPots" });
 
         endpoints.MapControllerRoute(FinanceRouteNames.PlanWhatIf, "Plan/What-if", new { controller = "Forecast", action = "WhatIf" });
         endpoints.MapControllerRoute(FinanceRouteNames.PlanScenarios, "Plan/Scenarios", new { controller = "Forecast", action = "Scenarios" });
         endpoints.MapControllerRoute(FinanceRouteNames.PlanCompare, "Plan/Compare", new { controller = "Forecast", action = "CompareScenarios" });
-        endpoints.MapControllerRoute(FinanceRouteNames.Plan, "Plan/{action=Index}/{id?}", new { controller = "Forecast" });
+        endpoints.MapControllerRoute(FinanceRouteNames.Plan, "Plan", new { controller = "Forecast", action = "Index" });
+        endpoints.MapControllerRoute(FinanceRouteNames.PlanAction, "Plan/{action=Index}/{id?}", new { controller = "Forecast" });
 
         endpoints.MapControllerRoute(FinanceRouteNames.InsightTrends, "Insights/Trends", new { controller = "FinancialTrends", action = "Index" });
         endpoints.MapControllerRoute(FinanceRouteNames.InsightHistory, "Insights/History/{action=Index}/{id?}", new { controller = "Events" });
-        endpoints.MapControllerRoute(FinanceRouteNames.Insights, "Insights/{action=Index}/{id?}", new { controller = "Statistics" });
+        endpoints.MapControllerRoute(FinanceRouteNames.Insights, "Insights", new { controller = "Statistics", action = "Index" });
+        endpoints.MapControllerRoute(FinanceRouteNames.InsightsAction, "Insights/{action=Index}/{id?}", new { controller = "Statistics" });
 
         return endpoints;
     }
