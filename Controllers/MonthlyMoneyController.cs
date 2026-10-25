@@ -213,8 +213,8 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
     public Task<IActionResult> Investments(int? year, int? month)
         => BuildWorkspaceAsync(
             "investments",
-            "Investments",
-            "Investments",
+            "Investment contributions",
+            "Monthly contributions",
             "Monthly contributions",
             "Record contributions made to investments without mixing them with current asset valuations.",
             "chart-pie",
@@ -236,9 +236,9 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
         => BuildWorkspaceAsync(
             "savings",
             "MoneyPots",
-            "Money pots",
+            "Pot funding",
             "Monthly pot funding",
-            "Record contributions to your existing money pots while keeping pot goals and settings on the main Money Pots page.",
+            "Record contributions to your existing pots while keeping pot goals and settings in Pots.",
             "piggy-bank",
             "No money pot contributions recorded",
             "Choose an active money pot and record the first contribution for this month.",

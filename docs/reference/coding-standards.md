@@ -1,5 +1,7 @@
 # Coding Standards
 
+See [Architecture and development conventions](architecture.md) for the MVC request flow, presentation choices, routing rules and review checklist.
+
 - Controllers coordinate only.
 - Business logic belongs in services.
 - Repository performs data access only.

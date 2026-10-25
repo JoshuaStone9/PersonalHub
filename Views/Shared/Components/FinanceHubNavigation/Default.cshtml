@@ -1,0 +1,11 @@
+@model FinanceManagerAspNet.Navigation.FinanceHubNavigation
+
+<nav class="fm-hub-tabs" aria-label="@Model.DestinationLabel sections">
+    @foreach (var tab in Model.Tabs)
+    {
+        <a class="@(tab.IsActive ? "active" : null)"
+           aria-current="@(tab.IsActive ? "page" : null)"
+           asp-route="@tab.RouteName"
+           asp-all-route-data="@tab.RouteValues">@tab.Label</a>
+    }
+</nav>

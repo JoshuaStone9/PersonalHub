@@ -14,14 +14,6 @@
         <a class="fm-month-button" asp-action="Income" asp-route-year="@Model.NextMonth.Year" asp-route-month="@Model.NextMonth.Month" aria-label="Next month"><i data-lucide="chevron-right"></i></a>
     </nav>
 </header>
-<nav class="fm-workspace-tabs" aria-label="Monthly money workspaces">
-    <a class="active" aria-current="page" asp-action="Income" asp-route-year="@Model.Year" asp-route-month="@Model.Month">Income</a>
-    <a asp-action="EssentialBills" asp-route-year="@Model.Year" asp-route-month="@Model.Month">Essential bills</a>
-    <a asp-action="EverydaySpending" asp-route-year="@Model.Year" asp-route-month="@Model.Month">Everyday spending</a>
-    <a asp-action="ExtraExpenses" asp-route-year="@Model.Year" asp-route-month="@Model.Month">Extra expenses</a>
-    <a asp-action="Investments" asp-route-year="@Model.Year" asp-route-month="@Model.Month">Investments</a>
-    <a asp-action="MoneyPots" asp-route-year="@Model.Year" asp-route-month="@Model.Month">Money pots</a>
-</nav>
 <section class="fm-workspace-metrics" aria-label="Income summary">
     <article class="fm-metric-card"><span>Total income</span><strong>@Model.Total.ToString("C", gb)</strong><small>@Model.MonthStart.ToString("MMMM yyyy")</small></article>
     <article class="fm-metric-card"><span>Income sources</span><strong>@Model.Entries.Count</strong><small>Recorded this month</small></article>

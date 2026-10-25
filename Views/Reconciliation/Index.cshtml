@@ -1,7 +1,7 @@
 @model FinanceManagerAspNet.Models.AccountReconciliationViewModel
 @using System.Globalization
 @{
-    ViewData["Title"] = "Account Management";
+    ViewData["Title"] = "Account balances";
     var gb = CultureInfo.GetCultureInfo("en-GB");
     var canEdit = User.Identity?.IsAuthenticated == true;
     var firstPendingAccount = Model.FirstAccountNeedingReconciliation;
@@ -14,7 +14,7 @@
 <header class="fm-dashboard-hero fm-account-hero">
     <div>
         <p class="eyebrow">Phase 11.6</p>
-        <h1>Account Management</h1>
+        <h1>Account balances</h1>
         <p>Manage account settings and keep recorded balances aligned with interest already added to monthly income.</p>
     </div>
     <div class="fm-account-hero-actions">

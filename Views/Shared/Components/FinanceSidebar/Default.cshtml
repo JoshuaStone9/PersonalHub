@@ -1,0 +1,51 @@
+@model FinanceManagerAspNet.Navigation.FinanceSidebarViewModel
+@using FinanceManagerAspNet.Navigation
+
+<aside class="fm-sidebar" id="fmSidebar" aria-label="Primary navigation">
+  <div class="fm-sidebar-brand">
+    <a asp-route="@FinanceRouteNames.Home" class="fm-brand-link" aria-label="Finance Manager home">
+      <img src="~/images/finance-manager-logo.png" alt="" class="fm-brand-logo" />
+      <span class="fm-brand-copy"><strong>Finance Manager</strong></span>
+    </a>
+    <button class="fm-sidebar-collapse" id="fmSidebarCollapse" type="button" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true">
+      <i data-lucide="chevron-left" data-sidebar-icon></i>
+    </button>
+  </div>
+
+  <nav class="fm-sidebar-nav" aria-label="Finance destinations">
+    @foreach (var destination in Model.Destinations)
+    {
+      var isActive = Model.ActiveDestination == destination.Key;
+      <a class="fm-nav-item @(isActive ? "active" : null)"
+         data-tooltip="@destination.Label"
+         aria-current="@(isActive ? "page" : null)"
+         asp-route="@destination.RouteName">
+        <i data-lucide="@destination.Icon"></i><span>@destination.Label</span>
+      </a>
+    }
+  </nav>
+
+  <div class="fm-sidebar-footer">
+    <a class="fm-nav-item @(Model.TasksActive ? "active" : null)" data-tooltip="Tasks" asp-route="@FinanceRouteNames.Tasks">
+      <i data-lucide="list-checks"></i><span>Tasks</span>
+      @if (Model.DueTaskCount > 0)
+      {
+        <span class="fm-nav-task-badge" aria-label="@Model.DueTaskCount due tasks">@Model.DueTaskCount</span>
+      }
+    </a>
+    <a class="fm-nav-item fm-app-switch" data-tooltip="Personal Vault" asp-controller="Items" asp-action="Index"><i data-lucide="boxes"></i><span>Personal Vault</span><small>Switch app</small></a>
+    <button class="fm-nav-item fm-nav-button" data-tooltip="Theme" id="themeToggle" type="button"><i data-lucide="sun-moon"></i><span>Theme</span></button>
+    <a class="fm-nav-item @(Model.SettingsActive ? "active" : null)" data-tooltip="Settings" asp-controller="Settings" asp-action="Index"><i data-lucide="settings"></i><span>Settings</span></a>
+    @if (Model.IsLoggedIn)
+    {
+      <form asp-controller="Auth" asp-action="Logout" method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="fm-nav-item fm-nav-button" data-tooltip="Logout"><i data-lucide="log-out"></i><span>Logout</span></button>
+      </form>
+    }
+    else
+    {
+      <a class="fm-nav-item" data-tooltip="Login" asp-controller="Auth" asp-action="Login"><i data-lucide="log-in"></i><span>Login</span></a>
+    }
+  </div>
+</aside>

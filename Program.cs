@@ -5,6 +5,7 @@ using FinanceManagerAspNet.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Data.SqlClient;
+using FinanceManagerAspNet.Navigation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,8 @@ builder.Services.AddScoped<FinanceCalculator>();
 builder.Services.AddHttpClient<MarketPriceService>();
 builder.Services.AddScoped<AppAuthService>();
 builder.Services.AddScoped<IStatementImportService, StatementImportService>();
+builder.Services.AddScoped<IFinanceTaskSummaryService, FinanceTaskSummaryService>();
+builder.Services.AddSingleton<IFinanceNavigationService, FinanceNavigationService>();
 
 var app = builder.Build();
 
@@ -76,11 +79,13 @@ app.Use(async (context, next) =>
 });
 
 app.UseStaticFiles();
+app.UseLegacyFinanceRouteRedirects();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapFinanceDestinationRoutes();
 
 app.MapControllerRoute(
     name: "vault",

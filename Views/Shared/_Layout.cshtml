@@ -1,10 +1,8 @@
-@inject FinanceManagerAspNet.Services.FinanceRepository LayoutFinanceRepository
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     var isVault = controller == "Items" || controller == "Locations" || controller == "VaultSettings";
     var isLoggedIn = User.Identity?.IsAuthenticated == true;
-    var financialTaskDueCount = isVault ? 0 : await LayoutFinanceRepository.GetDueReminderCountAsync();
 }
 <!doctype html>
 <html lang="en" data-theme="dark">
@@ -22,6 +20,7 @@
   else
   {
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/finance-navigation.css" asp-append-version="true" />
     @if (controller == "Dashboard")
     {
       <link rel="stylesheet" href="~/css/dashboard-health.css" asp-append-version="true" />
@@ -132,72 +131,7 @@
 else
 {
   <div class="fm-app-shell" id="fmAppShell">
-    <aside class="fm-sidebar" id="fmSidebar" aria-label="Primary navigation">
-      <div class="fm-sidebar-brand">
-        <a asp-controller="Dashboard" asp-action="Index" class="fm-brand-link" aria-label="Finance Manager dashboard">
-          <img src="~/images/finance-manager-logo.png" alt="" class="fm-brand-logo" />
-          <span class="fm-brand-copy"><strong>Finance Manager</strong></span>
-        </a>
-        <button class="fm-sidebar-collapse" id="fmSidebarCollapse" type="button" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true">
-          <i data-lucide="chevron-left" data-sidebar-icon></i>
-        </button>
-      </div>
-
-      <nav class="fm-sidebar-nav">
-        <a class="fm-nav-item @(controller == "Dashboard" ? "active" : "")" data-tooltip="Dashboard" asp-controller="Dashboard" asp-action="Index">
-          <i data-lucide="house"></i><span>Dashboard</span>
-        </a>
-
-        <div class="fm-nav-group">
-          <p class="fm-nav-heading">Finance</p>
-          <a class="fm-nav-item @(controller == "Statistics" ? "active" : "")" data-tooltip="Statistics" asp-controller="Statistics" asp-action="Index"><i data-lucide="chart-no-axes-combined"></i><span>Statistics</span></a>
-          <a class="fm-nav-item @(controller == "FinancialTrends" ? "active" : "")" data-tooltip="Financial Trends" asp-controller="FinancialTrends" asp-action="Index"><i data-lucide="chart-spline"></i><span>Financial Trends</span></a>
-          <a class="fm-nav-item @(controller == "Reconciliation" ? "active" : "")" data-tooltip="Account Management" asp-controller="Reconciliation" asp-action="Index"><i data-lucide="scale"></i><span>Accounts</span></a>
-          <a class="fm-nav-item @(controller == "StatementReconciliation" ? "active" : "")" data-tooltip="Statement Reconciliation" asp-controller="StatementReconciliation" asp-action="Index"><i data-lucide="file-search"></i><span>Statements</span></a>
-          <a class="fm-nav-item @(controller == "MoneyPotActivity" ? "active" : "")" data-tooltip="Money Pot Activity" asp-controller="MoneyPotActivity" asp-action="Index"><i data-lucide="activity"></i><span>Pot Activity</span></a>
-          <a class="fm-nav-item @(controller == "Forecast" ? "active" : "")" data-tooltip="Forecast" asp-controller="Forecast" asp-action="Index"><i data-lucide="trending-up"></i><span>Forecast</span></a>
-        </div>
-
-        <div class="fm-nav-group">
-          <p class="fm-nav-heading">Monthly money</p>
-          <a class="fm-nav-item @(controller == "MonthlyMoney" && action == "Income" ? "active" : "")" data-tooltip="Income" asp-controller="MonthlyMoney" asp-action="Income"><i data-lucide="wallet-cards"></i><span>Income</span></a>
-          <a class="fm-nav-item @(controller == "MonthlyMoney" && action == "EssentialBills" ? "active" : "")" data-tooltip="Essential Bills" asp-controller="MonthlyMoney" asp-action="EssentialBills"><i data-lucide="receipt"></i><span>Essential Bills</span></a>
-          <a class="fm-nav-item @(controller == "MonthlyMoney" && action == "EverydaySpending" ? "active" : "")" data-tooltip="Everyday Spending" asp-controller="MonthlyMoney" asp-action="EverydaySpending"><i data-lucide="shopping-basket"></i><span>Everyday Spending</span></a>
-          <a class="fm-nav-item @(controller == "MonthlyMoney" && action == "ExtraExpenses" ? "active" : "")" data-tooltip="Extra Expenses" asp-controller="MonthlyMoney" asp-action="ExtraExpenses"><i data-lucide="circle-plus"></i><span>Extra Expenses</span></a>
-          <a class="fm-nav-item @(controller == "MonthlyMoney" && action == "Investments" ? "active" : "")" data-tooltip="Investments" asp-controller="MonthlyMoney" asp-action="Investments"><i data-lucide="chart-pie"></i><span>Investments</span></a>
-          <a class="fm-nav-item @(controller == "MonthlyMoney" && action == "MoneyPots" ? "active" : "")" data-tooltip="Money Pots Funding" asp-controller="MonthlyMoney" asp-action="MoneyPots"><i data-lucide="piggy-bank"></i><span>Money Pots</span></a>
-        </div>
-
-        <div class="fm-nav-group">
-          <p class="fm-nav-heading">Money</p>
-          <a class="fm-nav-item @(controller == "Assets" ? "active" : "")" data-tooltip="Assets" asp-controller="Assets" asp-action="Index"><i data-lucide="landmark"></i><span>Assets</span></a>
-          <a class="fm-nav-item @(controller == "SavingPots" ? "active" : "")" data-tooltip="Money Pots" asp-controller="SavingPots" asp-action="Index"><i data-lucide="piggy-bank"></i><span>Money Pots</span></a>
-          <a class="fm-nav-item @(controller == "Events" ? "active" : "")" data-tooltip="Events" asp-controller="Events" asp-action="Index"><i data-lucide="calendar-days"></i><span>Events</span></a>
-          <a class="fm-nav-item @(controller == "Reminders" ? "active" : "")" data-tooltip="Financial Tasks" asp-controller="Reminders" asp-action="Index"><i data-lucide="list-checks"></i><span>Financial Tasks</span>@if (financialTaskDueCount > 0) { <span class="fm-nav-task-badge">@financialTaskDueCount</span> }</a>
-        </div>
-
-        <div class="fm-nav-group">
-          <p class="fm-nav-heading">Personal</p>
-          <a class="fm-nav-item" data-tooltip="Vault" asp-controller="Items" asp-action="Index"><i data-lucide="lock-keyhole"></i><span>Vault</span></a>
-        </div>
-      </nav>
-
-      <div class="fm-sidebar-footer">
-        <button class="fm-nav-item fm-nav-button" data-tooltip="Theme" id="themeToggle" type="button"><i data-lucide="sun-moon"></i><span>Theme</span></button>
-        <a class="fm-nav-item @(controller == "Settings" ? "active" : "")" data-tooltip="Settings" asp-controller="Settings" asp-action="Index"><i data-lucide="settings"></i><span>Settings</span></a>
-        @if (isLoggedIn)
-        {
-          <form asp-controller="Auth" asp-action="Logout" method="post">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="fm-nav-item fm-nav-button" data-tooltip="Logout"><i data-lucide="log-out"></i><span>Logout</span></button>
-          </form>
-        }
-        else
-        {
-          <a class="fm-nav-item" data-tooltip="Login" asp-controller="Auth" asp-action="Login"><i data-lucide="log-in"></i><span>Login</span></a>
-        }
-      </div>
-    </aside>
+    @await Component.InvokeAsync("FinanceSidebar")
 
     <div class="fm-main-column">
       <header class="fm-mobile-header">
@@ -219,6 +153,7 @@ else
         {
           <div class="fm-alert fm-alert-error"><i data-lucide="alert-circle"></i><strong>@TempData["Error"]</strong></div>
         }
+        @await Component.InvokeAsync("FinanceHubNavigation")
         @RenderBody()
       </main>
     </div>

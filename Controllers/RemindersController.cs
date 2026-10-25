@@ -1,6 +1,7 @@
 using FinanceManagerAspNet.Models;
 using FinanceManagerAspNet.Services;
 using Microsoft.AspNetCore.Mvc;
+using FinanceManagerAspNet.Navigation;
 
 namespace FinanceManagerAspNet.Controllers;
 
@@ -9,6 +10,7 @@ namespace FinanceManagerAspNet.Controllers;
 public sealed class RemindersController(FinanceRepository repo) : Controller
 {
     [HttpGet("")]
+    [HttpGet("/Tasks", Name = FinanceRouteNames.Tasks)]
     public async Task<IActionResult> Index(string status = "Open")
     {
         var pots = await repo.GetReservePotsAsync();
@@ -101,7 +103,7 @@ public sealed class RemindersController(FinanceRepository repo) : Controller
                 $"The recorded balance has not been updated since {x.UpdatedAt:dd MMM yyyy}.",
                 "Accounts",
                 x.UpdatedAt.Date <= today.AddDays(-180) ? "High" : "Medium",
-                "~/Reconciliation",
+                "~/Accounts",
                 "scale",
                 today)));
 
@@ -112,7 +114,7 @@ public sealed class RemindersController(FinanceRepository repo) : Controller
                 $"Approximately {x.EstimatedAmount:C} is expected this month.",
                 "Income",
                 "Medium",
-                $"~/MonthlyMoney/Income?year={today.Year}&month={today.Month}",
+                $"~/Month?year={today.Year}&month={today.Month}",
                 "badge-pound-sterling",
                 new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month)))));
 
@@ -124,7 +126,7 @@ public sealed class RemindersController(FinanceRepository repo) : Controller
                 $"{Math.Max(0m, x.TargetAmount!.Value - x.AllocatedAmount):C} remains before {x.DueDate:dd MMM yyyy}.",
                 "Money Pot",
                 x.DueDate!.Value.Date < today ? "High" : "Medium",
-                $"~/SavingPots#pot-{x.Id}",
+                $"~/Pots#pot-{x.Id}",
                 "piggy-bank",
                 x.DueDate)));
 

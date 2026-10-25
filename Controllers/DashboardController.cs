@@ -99,7 +99,7 @@ public sealed class DashboardController(
             .Select(x => new DashboardActionItem(
                 $"Check {x.Name} balance",
                 $"Last updated {x.UpdatedAt:dd MMM yyyy}",
-                "~/Reconciliation",
+                "~/Accounts",
                 x.UpdatedAt.Date <= DateTime.Today.AddDays(-180) ? "danger" : "warning",
                 DateTime.Today)));
 
@@ -109,7 +109,7 @@ public sealed class DashboardController(
             smartDashboardTasks.Add(new DashboardActionItem(
                 "Apply pending account interest",
                 $"{reconciliation.TotalPendingInterest:C} across {reconciliation.AccountsNeedingInterestReconciliation} account{(reconciliation.AccountsNeedingInterestReconciliation == 1 ? string.Empty : "s")}",
-                "~/Reconciliation",
+                "~/Accounts",
                 "warning",
                 DateTime.Today));
         }
@@ -120,7 +120,7 @@ public sealed class DashboardController(
             .Select(x => new DashboardActionItem(
                 $"Confirm {x.SourceName} interest",
                 $"Approximately {x.EstimatedAmount:C} expected this month",
-                $"~/MonthlyMoney/Income?year={y}&month={m}",
+                $"~/Month?year={y}&month={m}",
                 "warning",
                 new DateTime(y, m, DateTime.DaysInMonth(y, m)))));
 

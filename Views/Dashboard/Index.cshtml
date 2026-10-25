@@ -179,7 +179,7 @@
 </section>
 
 <section class="fm-dashboard-section" aria-labelledby="attention-title">
-    <div class="fm-dashboard-section-head"><div><p class="eyebrow">Today's priorities</p><h2 id="attention-title">What needs your attention</h2></div><a class="button secondary" asp-controller="Reminders" asp-action="Index">View all tasks</a></div>
+    <div class="fm-dashboard-section-head"><div><p class="eyebrow">Today's priorities</p><h2 id="attention-title">What needs your attention</h2></div><a class="button secondary" asp-route="@FinanceManagerAspNet.Navigation.FinanceRouteNames.Tasks">View all tasks</a></div>
     <div class="fm-attention-grid">
         <article class="fm-list-card">
             <div class="fm-card-heading"><div><span>Priority task list</span><h3>@Model.Experience.UpcomingActions.Count item@(Model.Experience.UpcomingActions.Count == 1 ? "" : "s")</h3></div><i data-lucide="list-checks"></i></div>

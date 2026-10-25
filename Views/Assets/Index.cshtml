@@ -1,7 +1,7 @@
 @model FinanceManagerAspNet.Models.AssetsViewModel
 @using System.Globalization
 @{
-    ViewData["Title"] = "Assets";
+    ViewData["Title"] = "Holdings";
     var gb = CultureInfo.GetCultureInfo("en-GB");
     var canEdit = User.Identity?.IsAuthenticated == true;
     var types = new[] { "Stock", "ETF", "Crypto", "Gold", "Silver", "Cash", "Manual" };
@@ -22,7 +22,7 @@
 <section class="hero card">
   <div>
     <p class="eyebrow">Financial Command Centre</p>
-    <h1>Assets</h1>
+    <h1>Holdings</h1>
     <p class="muted">Track market assets separately from physical bullion. Stocks, ETFs, crypto, gold, silver, cash and manual assets each have their own section.</p>
   </div>
 </section>
