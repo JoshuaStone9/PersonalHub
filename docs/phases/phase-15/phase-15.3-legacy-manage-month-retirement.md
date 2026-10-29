@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Implemented on 29 October 2026. Starting-adjustment editing now belongs to Month Overview, all monthly entry editing uses the canonical Month workspaces, and legacy Manage Month requests redirect while preserving the selected month.
 
 ## Goal
 
@@ -35,3 +35,11 @@ Remove the parallel `Dashboard?manage=true` editing experience after all of its 
 ## Rollback boundary
 
 Redirects should be introduced before view and action deletion. The deletion commit must remain independently revertible without requiring a database rollback.
+
+## Verification
+
+- `/Home?manage=true` and legacy Dashboard requests redirect to Month Overview or the requested owning Month tab with year and month retained.
+- Month Overview supports authenticated starting-adjustment creation, editing and removal.
+- `DashboardController` no longer owns income, payment or surplus-allocation write actions.
+- Searches of controllers, views and scripts find no `manage=true` links or references to the removed Manage Month view.
+- Navigation tests verify starting-adjustment ownership and the absence of generic monthly editing actions from `DashboardController`.

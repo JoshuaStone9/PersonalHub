@@ -2,7 +2,7 @@
 
 [All phases](../README.md) · [Roadmap](../../plans/roadmap.md)
 
-**Status: Proposed.** Nothing in this folder is evidence of implementation until its document is updated with verification results.
+**Status: In progress.** Phases 15.0–15.3 are implemented; Phases 15.4–15.5 remain proposed. Each subphase document records its own verification status.
 
 ## Purpose
 

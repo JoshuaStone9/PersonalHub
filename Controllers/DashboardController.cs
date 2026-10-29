@@ -19,6 +19,11 @@ public sealed class DashboardController(
         var now = DateTime.Today;
         var y = year ?? now.Year;
         var m = month ?? now.Month;
+
+        if (manage)
+            return RedirectLegacyManageMonth(y, m, source);
+
+        ViewBag.IsMonthOverview = monthOverview;
         await repo.EnsureModernTablesAsync();
 
         var incomeEntriesTotal = await repo.GetMonthlyIncomeEntriesTotalAsync(y, m);
@@ -169,144 +174,7 @@ public sealed class DashboardController(
                     previousMoneyPots.Sum(x => x.Amount))
                 : null);
 
-        if (manage)
-        {
-            ViewBag.SelectedSource = source;
-            ViewBag.ExistingBills = await repo.GetExistingPaymentOptionsAsync("bills");
-            ViewBag.ExistingEveryday = await repo.GetExistingPaymentOptionsAsync("everyday_spending");
-            ViewBag.ExistingExtras = await repo.GetExistingPaymentOptionsAsync("extra_expenses");
-            ViewBag.ExistingInvestments = await repo.GetExistingPaymentOptionsAsync("investments");
-            ViewBag.ExistingSavings = await repo.GetExistingPaymentOptionsAsync("savings");
-        }
-
-        return View(manage && !monthOverview ? "ManageMonth" : "Index", vm);
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveIncome(int year, int month, decimal amount, int sickDays)
-    {
-        if (!CanEdit()) return LoginRedirect();
-        await repo.SaveIncomeAsync(year, month, Math.Max(0, amount), Math.Max(0, sickDays));
-        return RedirectToDashboard(year, month, "income");
-    }
-
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveCarryForwardOverride(int year, int month, decimal amount, string? reason)
-    {
-        if (!CanEdit()) return LoginRedirect();
-        await repo.SaveCarryForwardOverrideAsync(year, month, amount, reason);
-        TempData["Success"] = "Carry forward override saved.";
-        return RedirectToDashboard(year, month, "carry-forward");
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> RecalculateCarryForward(int year, int month)
-    {
-        if (!CanEdit()) return LoginRedirect();
-        await repo.ClearCarryForwardOverrideAsync(year, month);
-        TempData["Success"] = "Manual override removed. The calculated carry forward is now being used.";
-        return RedirectToDashboard(year, month, "carry-forward");
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteCarryForward(int year, int month)
-    {
-        if (!CanEdit()) return LoginRedirect();
-        if (month is < 1 or > 12) return BadRequest("Month must be between 1 and 12.");
-
-        await repo.DeleteCarryForwardAsync(year, month);
-        TempData["Success"] = "The starting adjustment was removed.";
-        return RedirectToDashboard(year, month, "carry-forward");
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddPayment(int year, int month, string source, string name, decimal amount, DateTime date, string? category, string? type, string? length, string? notes, string? returnAnchor, bool isPermanent = false, int? accountBalanceId = null)
-    {
-        if (!CanEdit()) return LoginRedirect();
-
-        name = name?.Trim() ?? string.Empty;
-        var anchor = returnAnchor ?? source;
-
-        if (month is < 1 or > 12 || string.IsNullOrWhiteSpace(name) || amount < 0)
-        {
-            TempData["WorkspaceError"] = string.IsNullOrWhiteSpace(name)
-                ? "Enter a name before saving."
-                : amount < 0
-                    ? "Amount cannot be negative."
-                    : "The selected month is invalid.";
-            TempData["WorkspaceDraftName"] = name;
-            TempData["WorkspaceDraftAmount"] = amount.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            TempData["WorkspaceDraftDate"] = date == default ? string.Empty : date.ToString("yyyy-MM-dd");
-            TempData["WorkspaceDraftCategory"] = category;
-            TempData["WorkspaceDraftType"] = type;
-            TempData["WorkspaceDraftLength"] = length;
-            TempData["WorkspaceDraftNotes"] = notes;
-            return RedirectToWorkspace(year, month, anchor, focusQuickEntry: true);
-        }
-
-        var selectedDate = date == default
-            ? new DateTime(year, month, Math.Min(DateTime.Today.Day, DateTime.DaysInMonth(year, month)))
-            : date;
-
-        await repo.AddPaymentAsync(source, name, amount, selectedDate, category, type, length, notes, accountBalanceId);
-        if (source == "savings" && amount > 0)
-            await repo.ApplyReserveAllocationAsync(name, amount);
-
-        if (isPermanent && source != "extra_expenses")
-            await repo.UpsertMonthlyEntryTemplateAsync(source, name, amount, category, type, length, notes);
-
-        TempData["Success"] = source == "savings"
-            ? $"Contribution added to {name}."
-            : $"{name} added.";
-
-        return RedirectToWorkspace(year, month, anchor, focusQuickEntry: true);
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeletePayment(int year, int month, string source, int id, string? returnAnchor)
-    {
-        if (!CanEdit()) return LoginRedirect();
-        var existing = await repo.GetPaymentAsync(source, id);
-        await repo.DeletePaymentAsync(source, id);
-        if (source == "savings" && existing is not null) await repo.ApplyReserveAllocationAsync(existing.Name, -existing.Amount);
-        return RedirectToDashboard(year, month, returnAnchor ?? source);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> EditPayment(string source, int id, int year, int month)
-    {
-        if (!CanEdit()) return LoginRedirect();
-        var item = await repo.GetPaymentAsync(source, id);
-        if (item is null) return NotFound();
-        ViewBag.Year = year;
-        ViewBag.Month = month;
-        ViewBag.Accounts = (await repo.GetAccountsAsync(await repo.GetEmergencyFundAsync())).OrderBy(x => x.Name).ToList();
-        ViewBag.ReturnAction = source switch
-        {
-            "income" => "Income",
-            "bills" => "EssentialBills",
-            "everyday_spending" => "EverydaySpending",
-            "extra_expenses" => "ExtraExpenses",
-            "investments" => "Investments",
-            "savings" => "MoneyPots",
-            _ => null
-        };
-        return View(item);
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditPayment(int year, int month, string source, int id, string name, decimal amount, DateTime date, string? category, string? type, string? length, string? notes, int? accountBalanceId = null)
-    {
-        if (!CanEdit()) return LoginRedirect();
-        var existing = await repo.GetPaymentAsync(source, id);
-        await repo.UpdatePaymentAsync(source, id, name, Math.Max(0, amount), date, category, type, length, notes, accountBalanceId);
-        if (source == "savings" && existing is not null)
-        {
-            await repo.ApplyReserveAllocationAsync(existing.Name, -existing.Amount);
-            await repo.ApplyReserveAllocationAsync(name, Math.Max(0, amount));
-        }
-        return RedirectToDashboard(year, month, source);
+        return View("Index", vm);
     }
 
     [HttpGet]
@@ -351,43 +219,11 @@ public sealed class DashboardController(
         return RedirectToAction(nameof(Index), new { year = next.Year, month = next.Month });
     }
 
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> AllocateRemainingToReserve(int year, int month, decimal amount)
+    private IActionResult RedirectLegacyManageMonth(int year, int month, string? source)
     {
-        if (!CanEdit()) return LoginRedirect();
-        if (amount > 0)
-        {
-            await repo.AddPaymentAsync("savings", "Unallocated reserve", amount, new DateTime(year, month, 1), null, null, null, "Allocated from the remaining monthly surplus");
-            await repo.ApplyReserveAllocationAsync("Unallocated reserve", amount);
-            TempData["Success"] = $"£{amount:N2} allocated to the household reserve.";
-        }
-        return RedirectToDashboard(year, month, "savings");
-    }
-
-    private IActionResult RedirectToDashboard(int year, int month, string anchor)
-        => RedirectToWorkspace(year, month, anchor, focusQuickEntry: false);
-
-    private IActionResult RedirectToWorkspace(int year, int month, string anchor, bool focusQuickEntry)
-    {
-        var workspaceAction = anchor switch
-        {
-            "bills" => "EssentialBills",
-            "everyday_spending" or "everyday" => "EverydaySpending",
-            "extra_expenses" or "extras" => "ExtraExpenses",
-            "investments" => "Investments",
-            "savings" => "MoneyPots",
-            _ => null
-        };
-
-        if (workspaceAction is not null)
-            return RedirectToAction(workspaceAction, "MonthlyMoney", new
-            {
-                year,
-                month,
-                focus = focusQuickEntry ? "quick-entry" : null
-            });
-
-        return Redirect($"{Url.Action(nameof(Index), new { year, month, manage = true, source = anchor })}#{anchor}");
+        return RedirectToRoute(
+            FinanceManagerAspNet.Navigation.LegacyManageMonthRoutes.GetDestination(source),
+            new { year, month });
     }
     private bool CanEdit() => User.Identity?.IsAuthenticated == true;
     private IActionResult LoginRedirect() => RedirectToAction("Login", "Auth", new { returnUrl = Request.Path.ToString() + Request.QueryString.ToString() });

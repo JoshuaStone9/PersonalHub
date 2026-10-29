@@ -6,6 +6,28 @@ namespace FinanceManagerAspNet.Controllers;
 
 public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
 {
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveStartingAdjustment(int year, int month, decimal amount, string? reason)
+    {
+        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
+        if (month is < 1 or > 12) return BadRequest("Month must be between 1 and 12.");
+
+        await repo.SaveCarryForwardOverrideAsync(year, month, amount, reason);
+        TempData["Success"] = "Starting adjustment saved.";
+        return RedirectToMonthOverview(year, month);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteStartingAdjustment(int year, int month)
+    {
+        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
+        if (month is < 1 or > 12) return BadRequest("Month must be between 1 and 12.");
+
+        await repo.DeleteCarryForwardAsync(year, month);
+        TempData["Success"] = "The starting adjustment was removed.";
+        return RedirectToMonthOverview(year, month);
+    }
+
     public async Task<IActionResult> Income(int? year, int? month)
     {
         var today = DateTime.Today;
@@ -390,6 +412,12 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
             "savings" => nameof(MoneyPots),
             _ => throw new ArgumentOutOfRangeException(nameof(source), "Unknown monthly money workspace.")
         };
+
+    private IActionResult RedirectToMonthOverview(int year, int month)
+    {
+        var destination = Url.RouteUrl(FinanceManagerAspNet.Navigation.FinanceRouteNames.MonthOverview, new { year, month });
+        return Redirect($"{destination}#starting-adjustment");
+    }
 
     private async Task<IActionResult> BuildWorkspaceAsync(
         string source,

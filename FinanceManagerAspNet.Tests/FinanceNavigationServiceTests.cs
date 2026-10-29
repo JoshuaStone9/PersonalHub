@@ -132,4 +132,42 @@ public sealed class FinanceNavigationServiceTests
         var route = Assert.Single(actions, action => action.AttributeRouteInfo?.Name == FinanceRouteNames.Tasks);
         Assert.Equal("Tasks", route.AttributeRouteInfo!.Template);
     }
+
+    [Fact]
+    public void MonthlyMoneyController_OwnsStartingAdjustmentWrites()
+    {
+        var dashboardActions = typeof(DashboardController).GetMethods().Select(method => method.Name).ToHashSet();
+        var monthActions = typeof(MonthlyMoneyController).GetMethods().Select(method => method.Name).ToHashSet();
+
+        Assert.DoesNotContain("SaveCarryForwardOverride", dashboardActions);
+        Assert.DoesNotContain("DeleteCarryForward", dashboardActions);
+        Assert.Contains("SaveStartingAdjustment", monthActions);
+        Assert.Contains("DeleteStartingAdjustment", monthActions);
+    }
+
+    [Theory]
+    [InlineData("AddPayment")]
+    [InlineData("EditPayment")]
+    [InlineData("DeletePayment")]
+    [InlineData("SaveIncome")]
+    [InlineData("AllocateRemainingToReserve")]
+    public void DashboardController_NoLongerOwnsGenericMonthlyEditing(string actionName)
+    {
+        Assert.DoesNotContain(
+            typeof(DashboardController).GetMethods(),
+            method => method.Name == actionName);
+    }
+
+    [Theory]
+    [InlineData(null, FinanceRouteNames.MonthOverview)]
+    [InlineData("income", FinanceRouteNames.Month)]
+    [InlineData("bills", FinanceRouteNames.MonthEssentialBills)]
+    [InlineData("everyday", FinanceRouteNames.MonthEverydaySpending)]
+    [InlineData("extras", FinanceRouteNames.MonthExtraExpenses)]
+    [InlineData("investments", FinanceRouteNames.MonthInvestmentContributions)]
+    [InlineData("savings", FinanceRouteNames.MonthPotFunding)]
+    public void LegacyManageMonthSources_RedirectToOwningMonthTab(string? source, string expectedRoute)
+    {
+        Assert.Equal(expectedRoute, LegacyManageMonthRoutes.GetDestination(source));
+    }
 }

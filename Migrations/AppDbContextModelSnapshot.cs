@@ -449,6 +449,64 @@ namespace FinanceManagerAspNet.Migrations
                     b.ToTable("MaintenanceLogs");
                 });
 
+            modelBuilder.Entity("FinanceManagerAspNet.Models.MonthlyCarryForward", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("monthly_carry_forward_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("amount");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int")
+                        .HasColumnName("month");
+
+                    b.Property<decimal?>("OverrideAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("override_amount");
+
+                    b.Property<string>("OverrideReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("override_reason");
+
+                    b.Property<int?>("SourceMonth")
+                        .HasColumnType("int")
+                        .HasColumnName("source_month");
+
+                    b.Property<int?>("SourceYear")
+                        .HasColumnType("int")
+                        .HasColumnName("source_year");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int")
+                        .HasColumnName("year");
+
+                    b.HasKey("Id")
+                        .HasName("PK_monthly_carry_forward");
+
+                    b.HasIndex("Year", "Month")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_monthly_carry_forward");
+
+                    b.ToTable("monthly_carry_forward", (string)null);
+                });
+
             modelBuilder.Entity("FinanceManagerAspNet.Models.Platform", b =>
                 {
                     b.Property<int>("Id")

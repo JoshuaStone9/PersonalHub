@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Implemented on 25 October 2026. Month Overview, the persistent month selector and the canonical monthly workspace tabs are in place, with selected-month context preserved between destinations and writes.
 
 ## Goal
 

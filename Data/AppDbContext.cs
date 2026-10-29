@@ -16,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MaintenanceLog> MaintenanceLogs => Set<MaintenanceLog>();
     public DbSet<LoanRecord> LoanRecords => Set<LoanRecord>();
     public DbSet<DropdownOption> DropdownOptions => Set<DropdownOption>();
+    public DbSet<MonthlyCarryForward> MonthlyCarryForwards => Set<MonthlyCarryForward>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -129,5 +130,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         model.Entity<Platform>().HasIndex(p => new { p.Name, p.ItemTypeId }).IsUnique();
         model.Entity<Platform>().HasIndex(p => p.LegacyPlatformId);
         model.Entity<Location>().HasIndex(l => l.LegacyLocationId);
+
+        model.Entity<MonthlyCarryForward>(entity =>
+        {
+            entity.ToTable("monthly_carry_forward");
+            entity.HasKey(x => x.Id).HasName("PK_monthly_carry_forward");
+            entity.Property(x => x.Id).HasColumnName("monthly_carry_forward_id");
+            entity.Property(x => x.Year).HasColumnName("year");
+            entity.Property(x => x.Month).HasColumnName("month");
+            entity.Property(x => x.Amount).HasColumnName("amount").HasPrecision(18, 2).HasDefaultValue(0m);
+            entity.Property(x => x.OverrideAmount).HasColumnName("override_amount").HasPrecision(18, 2);
+            entity.Property(x => x.OverrideReason).HasColumnName("override_reason").HasMaxLength(500);
+            entity.Property(x => x.SourceYear).HasColumnName("source_year");
+            entity.Property(x => x.SourceMonth).HasColumnName("source_month");
+            entity.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("SYSUTCDATETIME()");
+            entity.HasIndex(x => new { x.Year, x.Month })
+                .IsUnique()
+                .HasDatabaseName("UQ_monthly_carry_forward");
+        });
     }
 }

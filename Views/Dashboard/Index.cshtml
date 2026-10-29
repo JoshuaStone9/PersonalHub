@@ -7,6 +7,7 @@
     var reserveUnallocated = (decimal)(ViewBag.ReserveUnallocated ?? 0m);
     var journey = Model.Experience.Journey;
     var largestExtra = Model.ExtraExpenses.OrderByDescending(x => x.Amount).FirstOrDefault();
+    var isMonthOverview = (bool)(ViewBag.IsMonthOverview ?? false);
 }
 
 <header class="fm-dashboard-hero">
@@ -42,9 +43,9 @@
             <span>Available income</span>
             <strong>@Model.EffectiveIncome.ToString("C", gb)</strong>
             <small>@Model.MonthlyIncome.ToString("C", gb) income · @Model.CarryForwardAmount.ToString("C", gb) starting adjustment</small>
-            @if (Model.HasCarryForwardRecord)
+            @if (isMonthOverview)
             {
-                <a asp-action="Index" asp-route-year="@Model.Year" asp-route-month="@Model.Month" asp-route-manage="true" asp-fragment="carry-forward">Manage adjustment</a>
+                <a href="#starting-adjustment">Manage adjustment</a>
             }
         </article>
         <article class="fm-metric-card"><span>Core spending</span><strong>@((Model.BillsTotal + Model.ExpensesTotal + Model.ExtraExpensesTotal).ToString("C", gb))</strong><small>Bills, everyday and extra expenses</small></article>
@@ -58,6 +59,36 @@
         <article class="card"><p class="eyebrow">Account management</p><h2>Accounts</h2><p><a asp-controller="Reconciliation" asp-action="Index">Manage balances and forecast settings</a></p></article>
     </div>
 </section>
+
+@if (isMonthOverview && User.Identity?.IsAuthenticated == true)
+{
+    <section class="fm-dashboard-section" id="starting-adjustment" aria-labelledby="starting-adjustment-title">
+        <div class="fm-dashboard-section-head">
+            <div><p class="eyebrow">Month setup</p><h2 id="starting-adjustment-title">Starting adjustment</h2></div>
+            <span>@(Model.HasCarryForwardRecord ? Model.CarryForwardAmount.ToString("C", gb) : "Not set")</span>
+        </div>
+        <div class="card">
+            <p class="muted">Add an adjustment only when you intentionally want to bring a balance into this month. It is not income and is never carried forward automatically.</p>
+            <form asp-controller="MonthlyMoney" asp-action="SaveStartingAdjustment" method="post" class="account-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="year" value="@Model.Year" />
+                <input type="hidden" name="month" value="@Model.Month" />
+                <label>Adjustment amount<input name="amount" type="number" step="0.01" value="@Model.CarryForwardAmount" /></label>
+                <label>Reason (optional)<input name="reason" maxlength="500" value="@Model.CarryForwardOverrideReason" /></label>
+                <button class="primary" type="submit">Save starting adjustment</button>
+            </form>
+            @if (Model.HasCarryForwardRecord)
+            {
+                <form asp-controller="MonthlyMoney" asp-action="DeleteStartingAdjustment" method="post" style="margin-top:12px" data-confirm="Remove this starting adjustment completely?">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="year" value="@Model.Year" />
+                    <input type="hidden" name="month" value="@Model.Month" />
+                    <button class="button danger-inline" type="submit">Remove starting adjustment</button>
+                </form>
+            }
+        </div>
+    </section>
+}
 
 <section class="fm-dashboard-section" aria-labelledby="health-title">
     <div class="fm-dashboard-section-head">
