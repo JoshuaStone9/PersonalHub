@@ -64,25 +64,23 @@ The Statistics page now calculates projected balances using monthly compounding:
 
 The carry-over SQL has also been simplified to avoid INSERT column/value count errors.
 
-## Latest update
+## Personal finance updates
 
-This version includes:
+This version includes several improvements to make managing my finances easier:
 
-- STONEYMINI SQL Server connection string in `appsettings.json`.
-- Fixed carry-over SQL using `INSERT ... SELECT`.
-- Add payment / bill dashboard flow.
-- Interest forecast statistics.
-- Goal forecast now adds the planned £1,200 monthly saving target into the £20,000 projection, not just the current pots and interest.
+- Improved the monthly carry-over process.
+- Added a simpler dashboard flow for recording payments and bills.
+- Added interest forecasts to help me understand how my savings may grow.
+- Updated the £20,000 goal forecast to include my planned monthly saving target of £1,200, alongside my existing savings and projected interest.
 
-## Latest update - House / Moneybox forecast
+## House and Moneybox planning
 
-Added a Statistics page House planner with:
+The Statistics page now includes a house savings planner that allows me to:
 
-- Manual external total value box.
-- £30,000 house goal input.
-- Moneybox fund amount input.
-- Moneybox interest rate input.
-- Bonus input that is taken off the total needed.
-- Normal remaining amount and remaining amount with Moneybox interest.
-- Interest-only calculator for any custom amount/rate/months.
-- The £1,200 monthly saving target is applied to the house/Moneybox forecast only and is not added into the Emergency Fund account projection.
+- Enter the total value of savings held outside the app.
+- Track progress towards my £30,000 house deposit goal.
+- Add my current Moneybox balance and interest rate.
+- Include any applicable bonus when calculating the amount still needed.
+- Compare the remaining amount with and without projected Moneybox interest.
+- Calculate potential interest for a custom amount, rate, and saving period.
+- Apply my £1,200 monthly saving target to the house forecast without including it in the Emergency Fund projection.
