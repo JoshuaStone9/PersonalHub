@@ -1,6 +1,6 @@
 # Personal Hub
 
-Personal Hub is an ASP.NET Core MVC application that brings together **Finance Manager**, **Personal Vault**, and **Move In Planner** behind one welcome screen and shared login.
+Personal Hub is an ASP.NET Core MVC application for managing personal finances, organising possessions, and planning a move in one place. It combines **Finance Manager** for budgeting, savings goals, and financial forecasts; **Personal Vault** for tracking possessions, collections, and asset values; and **Move In Planner** for organising household purchases and comparing product choices. All three tools are accessible from a single welcome screen, with a shared login for editing records.
 
 Finance Manager remains compatible with the existing WinForms data. Move In Planner is hosted at `/MoveInPlanner`, retains its separate `MoveInPlannerDb` database, and uses the shared login for editing.
 
