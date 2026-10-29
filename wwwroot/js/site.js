@@ -35,6 +35,60 @@ document.querySelectorAll('form[data-confirm]').forEach(form => {
     });
 });
 
+// ── AJAX writes with post-write navigation ────────────────────────────────
+const OPERATION_MESSAGE_KEY = 'finance-operation-message';
+
+try {
+    const message = sessionStorage.getItem(OPERATION_MESSAGE_KEY);
+    const target = document.querySelector('[data-operation-message-target]');
+    if (message && target) {
+        sessionStorage.removeItem(OPERATION_MESSAGE_KEY);
+        const alert = document.createElement('div');
+        alert.className = document.getElementById('fmAppShell')
+            ? 'fm-alert fm-alert-success'
+            : 'toast toast-success';
+        alert.setAttribute('role', 'status');
+        const text = document.createElement('strong');
+        text.textContent = message;
+        alert.append(text);
+        target.prepend(alert);
+    }
+} catch { /* storage may be unavailable */ }
+
+document.querySelectorAll('form[data-ajax-redirect]').forEach(form => {
+    form.addEventListener('submit', async event => {
+        if (event.defaultPrevented) return;
+        event.preventDefault();
+
+        const submitter = event.submitter;
+        if (submitter) submitter.disabled = true;
+        form.setAttribute('aria-busy', 'true');
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const result = await response.json();
+            if (!response.ok || result.success !== true) {
+                throw new Error(result.message || `Unable to save (${response.status}).`);
+            }
+
+            if (result.message) sessionStorage.setItem(OPERATION_MESSAGE_KEY, result.message);
+            if (result.redirectUrl) window.location.assign(result.redirectUrl);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unable to save these changes.';
+            window.alert(message);
+            if (submitter) submitter.disabled = false;
+            form.removeAttribute('aria-busy');
+        }
+    });
+});
+
 // ── Auto-dismiss toast ──────────────────────────────────────────────────────
 setTimeout(() => {
     document.querySelectorAll('.toast').forEach(t => {

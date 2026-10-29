@@ -110,7 +110,7 @@
                 </div>
             </header>
 
-            <main class="content">
+            <main class="content" data-operation-message-target>
                 @if (!isLoggedIn)
                 {
                     <div class="readonly-banner-vault">Read-only mode — login to unlock editing and location details.</div>
@@ -144,7 +144,7 @@ else
       {
         <div class="readonly-banner">Read-only mode — login to unlock editing.</div>
       }
-      <main class="fm-page-container">
+      <main class="fm-page-container" data-operation-message-target>
         @if (TempData["Success"] != null)
         {
           <div class="fm-alert fm-alert-success"><i data-lucide="check-circle-2"></i><strong>@TempData["Success"]</strong></div>

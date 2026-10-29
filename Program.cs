@@ -58,6 +58,8 @@ builder.Services.AddHttpClient<MarketPriceService>();
 builder.Services.AddScoped<AppAuthService>();
 builder.Services.AddScoped<IStatementImportService, StatementImportService>();
 builder.Services.AddScoped<IFinanceTaskSummaryService, FinanceTaskSummaryService>();
+builder.Services.AddScoped<IMonthlyMoneyRequestPolicy, MonthlyMoneyRequestPolicy>();
+builder.Services.AddScoped<IMonthlyMoneyService, MonthlyMoneyService>();
 builder.Services.AddSingleton<IFinanceNavigationService, FinanceNavigationService>();
 
 var app = builder.Build();

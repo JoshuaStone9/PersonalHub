@@ -68,7 +68,7 @@
             <span class="fm-status-pill">@Model.MissingPermanentTemplates.Count ready</span>
         </div>
 
-        <form asp-controller="MonthlyMoney" asp-action="SetupMonth" method="post" class="fm-month-setup-form">
+        <form asp-controller="MonthlyMoney" asp-action="SetupMonth" method="post" class="fm-month-setup-form" data-ajax-redirect>
             @Html.AntiForgeryToken()
             <input type="hidden" name="Year" value="@Model.Year" />
             <input type="hidden" name="Month" value="@Model.Month" />
@@ -203,6 +203,7 @@
                                       asp-controller="MonthlyMoney"
                                       asp-action="UpdateAmount"
                                       method="post"
+                                      data-ajax-redirect
                                       hidden>
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="source" value="@row.Source" />
@@ -234,10 +235,11 @@
                                    asp-route-month="@Model.Month">
                                     <span aria-hidden="true">Edit</span><span class="fm-visually-hidden">Edit @row.DisplayName</span>
                                 </a>
-                                <form asp-controller="Dashboard"
+                                <form asp-controller="MonthlyMoney"
                                       asp-action="DeletePayment"
                                       method="post"
-                                      data-confirm="Delete this item?">
+                                      data-confirm="Delete this item?"
+                                      data-ajax-redirect>
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="year" value="@Model.Year" />
                                     <input type="hidden" name="month" value="@Model.Month" />
@@ -271,11 +273,12 @@
 
         @if (canEdit)
         {
-            <form asp-controller="Dashboard"
+            <form asp-controller="MonthlyMoney"
                   asp-action="AddPayment"
                   method="post"
                   id="quick-entry-form"
                   class="fm-workspace-form remembered-payment-form"
+                  data-ajax-redirect
                   data-options="@optionsJson"
                   data-default-date="@defaultEntryDate.ToString("yyyy-MM-dd")">
                 @Html.AntiForgeryToken()
@@ -562,7 +565,7 @@
                     }
 
                     const result = await response.json();
-                    const repeatsMonthly = result.isPermanent === true;
+                    const repeatsMonthly = result.data?.isPermanent === true;
 
                     button.classList.toggle('is-recurring', repeatsMonthly);
                     button.classList.toggle('is-one-off', !repeatsMonthly);

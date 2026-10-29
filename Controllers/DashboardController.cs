@@ -14,6 +14,7 @@ public sealed class DashboardController(
     IWhatIfForecastService whatIfForecastService,
     IForecastScenarioService forecastScenarioService) : Controller
 {
+    [HttpGet]
     public async Task<IActionResult> Index(int? year, int? month, bool manage = false, string? source = null, bool monthOverview = false)
     {
         var now = DateTime.Today;

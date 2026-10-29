@@ -65,7 +65,7 @@ Deep links such as a statement workspace, pot anchor or scenario comparison cont
 - Use **Pot goals** for targets, balances and configuration.
 - Use **Starting adjustment** for a manual amount brought into a month's plan.
 
-The destination shell and shared tabs now use these mappings. Broader copy cleanup remains part of Phase 15.5 so this foundation does not redesign specialist pages prematurely.
+The destination shell and shared tabs now use these mappings. Broader copy cleanup remains part of Phase 15.6 so this foundation does not redesign specialist pages prematurely.
 
 ## Acceptance criteria
 

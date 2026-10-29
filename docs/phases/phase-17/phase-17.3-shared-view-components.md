@@ -4,6 +4,8 @@
 
 Proposed.
 
+Phase 15.4 extracts monthly and dashboard presentation units needed before the dashboard redesign. This phase applies the same standards across the remaining hubs and specialist views.
+
 ## Goal
 
 Reduce large Razor files and inconsistent interaction patterns by extracting repeated presentation components without moving calculations into views.

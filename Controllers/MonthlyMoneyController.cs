@@ -4,30 +4,34 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceManagerAspNet.Controllers;
 
-public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
+public sealed class MonthlyMoneyController(
+    FinanceRepository repo,
+    IMonthlyMoneyRequestPolicy requestPolicy,
+    IMonthlyMoneyService monthlyMoneyService) : FinanceController
 {
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveStartingAdjustment(int year, int month, decimal amount, string? reason)
+    public async Task<IActionResult> SaveStartingAdjustment(StartingAdjustmentInput input)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        if (month is < 1 or > 12) return BadRequest("Month must be between 1 and 12.");
+        MonthlyRequestValidation validation = requestPolicy.ValidateMonth(input.Year, input.Month);
+        IActionResult? failure = ValidateWriteRequest(validation);
+        if (failure is not null) return failure;
 
-        await repo.SaveCarryForwardOverrideAsync(year, month, amount, reason);
-        TempData["Success"] = "Starting adjustment saved.";
-        return RedirectToMonthOverview(year, month);
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.SaveStartingAdjustmentAsync(input);
+        return OperationSucceeded(result, GetMonthOverviewUrl(input.Year, input.Month), input);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteStartingAdjustment(int year, int month)
+    public async Task<IActionResult> DeleteStartingAdjustment(MonthlyRecordInput input)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        if (month is < 1 or > 12) return BadRequest("Month must be between 1 and 12.");
+        MonthlyRequestValidation validation = requestPolicy.ValidateMonth(input.Year, input.Month);
+        IActionResult? failure = ValidateWriteRequest(validation);
+        if (failure is not null) return failure;
 
-        await repo.DeleteCarryForwardAsync(year, month);
-        TempData["Success"] = "The starting adjustment was removed.";
-        return RedirectToMonthOverview(year, month);
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.DeleteStartingAdjustmentAsync(input);
+        return OperationSucceeded(result, GetMonthOverviewUrl(input.Year, input.Month), input);
     }
 
+    [HttpGet]
     public async Task<IActionResult> Income(int? year, int? month)
     {
         var today = DateTime.Today;
@@ -58,16 +62,22 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
         string? notes,
         string interestHandling)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        if (month is < 1 or > 12 || string.IsNullOrWhiteSpace(sourceKey) || string.IsNullOrWhiteSpace(sourceName) || actualAmount < 0m)
-            return BadRequest("Enter a valid interest payment.");
+        IActionResult? failure = ValidateWriteRequest(
+            month is >= 1 and <= 12
+            && !string.IsNullOrWhiteSpace(sourceKey)
+            && !string.IsNullOrWhiteSpace(sourceName)
+            && actualAmount >= 0m,
+            "Enter a valid interest payment.");
+        if (failure is not null) return failure;
 
         var date = receivedDate == default
             ? new DateTime(year, month, DateTime.DaysInMonth(year, month))
             : receivedDate;
 
-        if (date.Year != year || date.Month != month)
-            return BadRequest("The received date must be inside the selected month.");
+        IActionResult? dateFailure = ValidateWriteRequest(
+            date.Year == year && date.Month == month,
+            "The received date must be inside the selected month.");
+        if (dateFailure is not null) return dateFailure;
 
         if (string.Equals(interestHandling, "Ignore for now", StringComparison.OrdinalIgnoreCase))
         {
@@ -96,8 +106,10 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateInterestHandling(int id, int year, int month, string interestHandling)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        if (id <= 0 || month is < 1 or > 12) return BadRequest("Enter a valid interest payment.");
+        IActionResult? failure = ValidateWriteRequest(
+            id > 0 && month is >= 1 and <= 12,
+            "Enter a valid interest payment.");
+        if (failure is not null) return failure;
 
         try
         {
@@ -117,56 +129,65 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
 
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddIncome(int year, int month, string name, decimal amount, DateTime date, string? category, string? notes, bool isRecurring = false)
+    public async Task<IActionResult> AddIncome(MonthlyIncomeEntryInput input)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        if (month is < 1 or > 12 || string.IsNullOrWhiteSpace(name) || amount < 0) return BadRequest("Enter a valid income source and amount.");
-        var selectedDate = date == default ? new DateTime(year, month, Math.Min(DateTime.Today.Day, DateTime.DaysInMonth(year, month))) : date;
-        await repo.AddMonthlyIncomeEntryAsync(name, amount, selectedDate, category, notes, isRecurring);
-        TempData["Success"] = $"{name.Trim()} income added.";
-        return RedirectToAction(nameof(Income), new { year, month, focus = "quick-entry" });
+        MonthlyRequestValidation validation = requestPolicy.ValidateIncome(input);
+        IActionResult? failure = ValidateWriteRequest(validation);
+        if (failure is not null) return failure;
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.AddIncomeAsync(input);
+        string? redirectUrl = Url.Action(nameof(Income), new { year = input.Year, month = input.Month, focus = "quick-entry" });
+        return OperationSucceeded(result, redirectUrl, input);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateIncome(int id, int year, int month, string name, decimal amount, DateTime date, string? category, string? notes, bool isRecurring = false)
+    public async Task<IActionResult> UpdateIncome(MonthlyIncomeEntryInput input)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        if (string.IsNullOrWhiteSpace(name) || amount < 0) return BadRequest("Enter a valid income source and amount.");
-        await repo.UpdateMonthlyIncomeEntryAsync(id, name, amount, date, category, notes, isRecurring);
-        TempData["Success"] = $"{name.Trim()} income updated.";
-
-        var url = Url.Action(nameof(Income), new { year, month });
-
-        return url is null
-            ? RedirectToAction(nameof(Income), new { year, month })
-            : Redirect($"{url}#entry-{id}");
+        MonthlyRequestValidation validation = requestPolicy.ValidateIncome(input);
+        IActionResult? failure = ValidateWriteRequest(
+            validation.IsValid && input.Id > 0,
+            validation.Error ?? "Enter a valid income entry.");
+        if (failure is not null) return failure;
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.UpdateIncomeAsync(input);
+        string? redirectUrl = Url.Action(nameof(Income), new { year = input.Year, month = input.Month });
+        return OperationSucceeded(result, $"{redirectUrl}#entry-{input.Id}", input);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteIncome(int id, int year, int month)
+    public async Task<IActionResult> DeleteIncome(MonthlyRecordInput input)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        await repo.DeleteMonthlyIncomeEntryAsync(id);
-        TempData["Success"] = "Income entry deleted.";
-        return RedirectToAction(nameof(Income), new { year, month });
+        MonthlyRequestValidation validation = requestPolicy.ValidateMonth(input.Year, input.Month);
+        IActionResult? failure = ValidateWriteRequest(
+            validation.IsValid && input.Id > 0,
+            validation.Error ?? "Enter a valid income entry.");
+        if (failure is not null) return failure;
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.DeleteIncomeAsync(input);
+        string? redirectUrl = Url.Action(nameof(Income), new { year = input.Year, month = input.Month });
+        return OperationSucceeded(result, redirectUrl, input);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetIncomeRecurring(int id, int year, int month, bool isRecurring)
+    public async Task<IActionResult> SetIncomeRecurring(IncomeRecurrenceInput input)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        await repo.SetMonthlyIncomeRecurringAsync(id, isRecurring);
-        return Json(new { success = true, isRecurring, message = isRecurring ? "Income now repeats monthly." : "Income is now one-off." });
+        MonthlyRequestValidation validation = requestPolicy.ValidateMonth(input.Year, input.Month);
+        IActionResult? failure = ValidateWriteRequest(
+            validation.IsValid && input.Id > 0,
+            validation.Error ?? "Enter a valid income entry.");
+        if (failure is not null) return failure;
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.SetIncomeRecurringAsync(input);
+        return OperationSucceeded(result, null, new { input.Id, input.IsRecurring });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetupIncomeMonth(int year, int month, List<int> entryIds)
+    public async Task<IActionResult> SetupIncomeMonth(RecurringIncomeSetupInput input)
     {
-        if (User.Identity?.IsAuthenticated != true) return Unauthorized();
-        var added = await repo.SetupRecurringIncomeAsync(year, month, entryIds ?? []);
-        TempData["Success"] = added == 0 ? "No new recurring income was added." : $"{added} recurring income entr{(added == 1 ? "y" : "ies")} added.";
-        return RedirectToAction(nameof(Income), new { year, month });
+        MonthlyRequestValidation validation = requestPolicy.ValidateMonth(input.Year, input.Month);
+        IActionResult? failure = ValidateWriteRequest(validation);
+        if (failure is not null) return failure;
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.SetupRecurringIncomeAsync(input);
+        string? redirectUrl = Url.Action(nameof(Income), new { year = input.Year, month = input.Month });
+        return OperationSucceeded(result, redirectUrl, input);
     }
+    [HttpGet]
     public Task<IActionResult> EssentialBills(int? year, int? month)
         => BuildWorkspaceAsync(
             "bills",
@@ -188,6 +209,7 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
             year: year,
             month: month);
 
+    [HttpGet]
     public Task<IActionResult> EverydaySpending(int? year, int? month)
         => BuildWorkspaceAsync(
             "everyday_spending",
@@ -210,6 +232,7 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
             year: year,
             month: month);
 
+    [HttpGet]
     public Task<IActionResult> ExtraExpenses(int? year, int? month)
         => BuildWorkspaceAsync(
             "extra_expenses",
@@ -232,6 +255,7 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
             year: year,
             month: month);
 
+    [HttpGet]
     public Task<IActionResult> Investments(int? year, int? month)
         => BuildWorkspaceAsync(
             "investments",
@@ -254,6 +278,7 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
             year: year,
             month: month);
 
+    [HttpGet]
     public Task<IActionResult> MoneyPots(int? year, int? month)
         => BuildWorkspaceAsync(
             "savings",
@@ -277,129 +302,77 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetPermanent(
-        string source,
-        int id,
-        int year,
-        int month,
-        bool isPermanent)
+    public async Task<IActionResult> AddPayment(MonthlyPaymentInput input)
     {
-        if (User.Identity?.IsAuthenticated != true)
-            return Unauthorized();
+        IActionResult? failure = ValidateWriteRequest(
+            IsWorkspaceSource(input.Source)
+            && input.Month is >= 1 and <= 12
+            && !string.IsNullOrWhiteSpace(input.Name)
+            && input.Amount >= 0m,
+            "Enter a valid monthly entry.");
+        if (failure is not null) return failure;
 
-        if (source == "extra_expenses")
-            return BadRequest("Extra expenses are always one-off entries.");
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.AddPaymentAsync(input);
+        return OperationSucceeded(result, GetWorkspaceUrl(input.Source, input.Year, input.Month, "quick-entry"), input);
+    }
 
-        var entry = await repo.GetPaymentAsync(source, id);
-        if (entry is null)
-            return NotFound();
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeletePayment(MonthlyPaymentRecordInput input)
+    {
+        IActionResult? failure = ValidateWriteRequest(
+            IsWorkspaceSource(input.Source) && input.Id > 0 && input.Month is >= 1 and <= 12,
+            "Enter a valid monthly entry.");
+        if (failure is not null) return failure;
 
-        string message;
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.DeletePaymentAsync(input);
+        return OperationSucceeded(result, GetWorkspaceUrl(input.Source, input.Year, input.Month), input);
+    }
 
-        if (isPermanent)
-        {
-            await repo.UpsertMonthlyEntryTemplateAsync(
-                source,
-                entry.Name,
-                entry.Amount,
-                entry.Category,
-                entry.Type,
-                entry.Length,
-                entry.Notes);
-            message = $"{entry.DisplayName} now repeats monthly.";
-        }
-        else
-        {
-            await repo.SetMonthlyEntryTemplateActiveAsync(source, entry.Name, false);
-            message = $"{entry.DisplayName} is now a one-off entry.";
-        }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPermanent(MonthlyPaymentRecurrenceInput input)
+    {
+        IActionResult? failure = ValidateWriteRequest(
+            IsWorkspaceSource(input.Source) && input.Source != "extra_expenses" && input.Id > 0,
+            "Extra expenses are always one-off entries.");
+        if (failure is not null) return failure;
 
-        if (string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase))
-        {
-            return Json(new
-            {
-                success = true,
-                isPermanent,
-                message
-            });
-        }
-
-        TempData["Success"] = message;
-        var destination = Url.Action(GetWorkspaceAction(source), new { year, month });
-        return Redirect($"{destination}#entry-{id}");
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.SetPaymentRecurringAsync(input);
+        return OperationSucceeded(result, null, new { input.Id, input.IsPermanent });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetupMonth(MonthSetupInput input)
     {
-        if (User.Identity?.IsAuthenticated != true)
-            return Unauthorized();
+        IActionResult? failure = ValidateWriteRequest(
+            IsWorkspaceSource(input.Source) && input.Month is >= 1 and <= 12,
+            "Month must be between 1 and 12.");
+        if (failure is not null) return failure;
 
-        if (input.Month is < 1 or > 12)
-            return BadRequest("Month must be between 1 and 12.");
-
-        var added = await repo.SetupMonthFromTemplatesAsync(
-            input.Year,
-            input.Month,
-            input.Source,
-            input.Items);
-
-        TempData["Success"] = added == 0
-            ? "No new recurring entries were added. Existing entries were left unchanged."
-            : $"{added} recurring entr{(added == 1 ? "y" : "ies")} added to {new DateTime(input.Year, input.Month, 1):MMMM yyyy}.";
-
-        return RedirectToAction(GetWorkspaceAction(input.Source), new
-        {
-            year = input.Year,
-            month = input.Month,
-            focus = "monthly-review"
-        });
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.SetupMonthAsync(input);
+        return OperationSucceeded(result, GetWorkspaceUrl(input.Source, input.Year, input.Month, "monthly-review"), input);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateAmount(
-        string source,
-        int id,
-        decimal amount,
-        int year,
-        int month)
+    public async Task<IActionResult> UpdateAmount(MonthlyPaymentAmountInput input)
     {
-        if (User.Identity?.IsAuthenticated != true)
-            return Unauthorized();
+        IActionResult? failure = ValidateWriteRequest(
+            IsWorkspaceSource(input.Source) && input.Month is >= 1 and <= 12 && input.Amount >= 0m,
+            input.Month is < 1 or > 12 ? "Month must be between 1 and 12." : "Amount cannot be negative.");
+        if (failure is not null) return failure;
 
-        if (month is < 1 or > 12)
-            return BadRequest("Month must be between 1 and 12.");
-
-        if (amount < 0)
-            return BadRequest("Amount cannot be negative.");
-
-        var existing = await repo.GetPaymentAsync(source, id);
-        if (existing is null)
-            return NotFound();
-
-        await repo.UpdatePaymentAsync(
-            source,
-            id,
-            existing.Name,
-            amount,
-            existing.Date,
-            existing.Category,
-            existing.Type,
-            existing.Length,
-            existing.Notes,
-            existing.AccountBalanceId);
-
-        if (source == "savings")
-            await repo.ApplyReserveAllocationAsync(existing.Name, amount - existing.Amount);
-
-        TempData["Success"] = $"{existing.DisplayName} amount updated.";
-
-        var actionName = GetWorkspaceAction(source);
-        var destination = Url.Action(actionName, new { year, month });
-        return Redirect($"{destination}#entry-{id}");
+        MonthlyMoneyOperationResult result = await monthlyMoneyService.UpdateAmountAsync(input);
+        return OperationSucceeded(result, $"{GetWorkspaceUrl(input.Source, input.Year, input.Month)}#entry-{input.Id}", input);
     }
+
+    private static bool IsWorkspaceSource(string source)
+        => source is "bills" or "everyday_spending" or "extra_expenses" or "investments" or "savings";
+
+    private string? GetWorkspaceUrl(string source, int year, int month, string? focus = null)
+        => Url.Action(GetWorkspaceAction(source), new { year, month, focus });
 
     private static string GetWorkspaceAction(string source)
         => source switch
@@ -413,10 +386,10 @@ public sealed class MonthlyMoneyController(FinanceRepository repo) : Controller
             _ => throw new ArgumentOutOfRangeException(nameof(source), "Unknown monthly money workspace.")
         };
 
-    private IActionResult RedirectToMonthOverview(int year, int month)
+    private string GetMonthOverviewUrl(int year, int month)
     {
-        var destination = Url.RouteUrl(FinanceManagerAspNet.Navigation.FinanceRouteNames.MonthOverview, new { year, month });
-        return Redirect($"{destination}#starting-adjustment");
+        string? destination = Url.RouteUrl(FinanceManagerAspNet.Navigation.FinanceRouteNames.MonthOverview, new { year, month });
+        return $"{destination}#starting-adjustment";
     }
 
     private async Task<IActionResult> BuildWorkspaceAsync(

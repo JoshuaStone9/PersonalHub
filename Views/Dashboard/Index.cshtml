@@ -69,7 +69,7 @@
         </div>
         <div class="card">
             <p class="muted">Add an adjustment only when you intentionally want to bring a balance into this month. It is not income and is never carried forward automatically.</p>
-            <form asp-controller="MonthlyMoney" asp-action="SaveStartingAdjustment" method="post" class="account-form">
+            <form asp-controller="MonthlyMoney" asp-action="SaveStartingAdjustment" method="post" class="account-form" data-ajax-redirect>
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="year" value="@Model.Year" />
                 <input type="hidden" name="month" value="@Model.Month" />
@@ -79,7 +79,7 @@
             </form>
             @if (Model.HasCarryForwardRecord)
             {
-                <form asp-controller="MonthlyMoney" asp-action="DeleteStartingAdjustment" method="post" style="margin-top:12px" data-confirm="Remove this starting adjustment completely?">
+                <form asp-controller="MonthlyMoney" asp-action="DeleteStartingAdjustment" method="post" style="margin-top:12px" data-confirm="Remove this starting adjustment completely?" data-ajax-redirect>
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="year" value="@Model.Year" />
                     <input type="hidden" name="month" value="@Model.Month" />

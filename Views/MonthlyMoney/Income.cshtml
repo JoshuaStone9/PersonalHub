@@ -128,7 +128,7 @@
 {
 <section class="fm-month-setup-card">
     <div class="fm-month-setup-head"><div><p class="eyebrow">Month setup</p><h2>Prepare income for @Model.MonthStart.ToString("MMMM yyyy")</h2><p class="muted">Bring forward recurring income sources from the immediately preceding month.</p></div><span class="fm-status-pill">@Model.MissingRecurringEntries.Count ready</span></div>
-    <form asp-action="SetupIncomeMonth" method="post" class="fm-month-setup-form">@Html.AntiForgeryToken()<input type="hidden" name="year" value="@Model.Year"/><input type="hidden" name="month" value="@Model.Month"/>
+    <form asp-action="SetupIncomeMonth" method="post" class="fm-month-setup-form" data-ajax-redirect>@Html.AntiForgeryToken()<input type="hidden" name="year" value="@Model.Year"/><input type="hidden" name="month" value="@Model.Month"/>
         <div class="fm-month-setup-list">@foreach (var entry in Model.MissingRecurringEntries){<label class="fm-month-setup-row"><input type="checkbox" name="entryIds" value="@entry.Id" checked/><span class="fm-month-setup-copy"><strong>@entry.Name</strong><small>@(entry.Category ?? "Recurring income")</small></span><strong>@entry.Amount.ToString("C", gb)</strong></label>}</div>
         <div class="fm-month-setup-actions"><button class="button primary" type="submit">Add selected income</button></div>
     </form>
@@ -201,7 +201,7 @@ else
                     <div class="fm-workspace-row-actions">
                         <details class="fm-income-edit">
                             <summary class="button" aria-label="Edit @entry.Name income">Edit</summary>
-                            <form asp-action="UpdateIncome" method="post" class="fm-income-edit-form">
+                            <form asp-action="UpdateIncome" method="post" class="fm-income-edit-form" data-ajax-redirect>
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@entry.Id" />
                                 <input type="hidden" name="year" value="@Model.Year" />
@@ -215,7 +215,7 @@ else
                                 <button class="button primary" type="submit">Save</button>
                             </form>
                         </details>
-                        <form asp-action="DeleteIncome" method="post" onsubmit="return confirm('Delete @entry.Name income?');">
+                        <form asp-action="DeleteIncome" method="post" data-confirm="Delete @entry.Name income?" data-ajax-redirect>
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@entry.Id" />
                             <input type="hidden" name="year" value="@Model.Year" />
@@ -229,7 +229,7 @@ else
     </div>
 }
 </section>
-<aside class="fm-workspace-entry-card" aria-labelledby="add-income-title"><p class="eyebrow">Quick entry</p><h2 id="add-income-title">Add income</h2><p class="muted">Add each salary, bonus, overtime payment or other source separately.</p>@if(canEdit){<form asp-action="AddIncome" method="post" id="quick-entry-form" class="fm-workspace-form">@Html.AntiForgeryToken()<input type="hidden" name="year" value="@Model.Year"/><input type="hidden" name="month" value="@Model.Month"/><label>Income source<input name="name" required autofocus placeholder="e.g. Salary 1"/></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required inputmode="decimal"/></label><label>Date<input name="date" type="date" value="@defaultDate.ToString("yyyy-MM-dd")" required/></label><label>Income type<select name="category"><option>Salary</option><option>Overtime</option><option>Bonus</option><option>Benefits</option><option>Refund</option><option>Interest</option><option>Dividends</option><option>Rental income</option><option>Other passive income</option><option>Other income</option></select></label><label>Notes<textarea name="notes" rows="3"></textarea></label><label class="fm-checkbox-row"><input name="isRecurring" type="checkbox" value="true"/><span><strong>Repeats every month</strong><small>Offer this income source when preparing the next month.</small></span></label><button class="button primary" type="submit">Add income</button></form>}else{<p class="muted">Sign in to add income.</p>}</aside>
+<aside class="fm-workspace-entry-card" aria-labelledby="add-income-title"><p class="eyebrow">Quick entry</p><h2 id="add-income-title">Add income</h2><p class="muted">Add each salary, bonus, overtime payment or other source separately.</p>@if(canEdit){<form asp-action="AddIncome" method="post" id="quick-entry-form" class="fm-workspace-form" data-ajax-redirect>@Html.AntiForgeryToken()<input type="hidden" name="year" value="@Model.Year"/><input type="hidden" name="month" value="@Model.Month"/><label>Income source<input name="name" required autofocus placeholder="e.g. Salary 1"/></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required inputmode="decimal"/></label><label>Date<input name="date" type="date" value="@defaultDate.ToString("yyyy-MM-dd")" required/></label><label>Income type<select name="category"><option>Salary</option><option>Overtime</option><option>Bonus</option><option>Benefits</option><option>Refund</option><option>Interest</option><option>Dividends</option><option>Rental income</option><option>Other passive income</option><option>Other income</option></select></label><label>Notes<textarea name="notes" rows="3"></textarea></label><label class="fm-checkbox-row"><input name="isRecurring" type="checkbox" value="true"/><span><strong>Repeats every month</strong><small>Offer this income source when preparing the next month.</small></span></label><button class="button primary" type="submit">Add income</button></form>}else{<p class="muted">Sign in to add income.</p>}</aside>
 </div>
 @section Scripts
 {
@@ -267,7 +267,7 @@ else
                     }
 
                     const result = await response.json();
-                    const repeatsMonthly = result.isRecurring === true;
+                    const repeatsMonthly = result.data?.isRecurring === true;
 
                     button.classList.toggle('is-recurring', repeatsMonthly);
                     button.classList.toggle('is-one-off', !repeatsMonthly);

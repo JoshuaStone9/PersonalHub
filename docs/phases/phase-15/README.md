@@ -2,7 +2,7 @@
 
 [All phases](../README.md) · [Roadmap](../../plans/roadmap.md)
 
-**Status: In progress.** Phases 15.0–15.3 are implemented; Phases 15.4–15.5 remain proposed. Each subphase document records its own verification status.
+**Status: In progress.** Phases 15.0–15.3 are implemented; Phases 15.4–15.6 remain proposed. Each subphase document records its own verification status.
 
 ## Purpose
 
@@ -14,8 +14,9 @@ Phase 15 reduces the number of concepts exposed during routine use. It introduce
 - [15.1 — Unified Month workspace](phase-15.1-unified-month-workspace.md)
 - [15.2 — Unified month setup](phase-15.2-unified-month-setup.md)
 - [15.3 — Legacy Manage Month retirement](phase-15.3-legacy-manage-month-retirement.md)
-- [15.4 — Exception-led dashboard](phase-15.4-exception-led-dashboard.md)
-- [15.5 — Navigation and language rollout](phase-15.5-navigation-and-language-rollout.md)
+- [15.4 — Monthly code-quality foundation](phase-15.4-monthly-code-quality-foundation.md)
+- [15.5 — Exception-led dashboard](phase-15.5-exception-led-dashboard.md)
+- [15.6 — Navigation and language rollout](phase-15.6-navigation-and-language-rollout.md)
 
 ## Programme constraints
 

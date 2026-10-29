@@ -4,6 +4,8 @@
 
 Proposed.
 
+Phase 15.4 establishes these conventions for the monthly and dashboard surfaces. This phase completes the conversion across the rest of the application.
+
 ## Goal
 
 Keep controllers focused on HTTP concerns and orchestration by moving validation policies and business operations into typed services.
